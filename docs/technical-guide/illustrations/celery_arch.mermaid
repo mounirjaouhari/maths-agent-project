@@ -1,0 +1,19 @@
+graph LR
+    A[Moteur Workflow - Producteur] --> B(Broker de Messages - Redis/RabbitMQ)
+    B --> C[Queue de Tâches]
+    C --> D[Worker Celery 1 - Consommateur]
+    C --> E[Worker Celery 2 - Consommateur]
+    D --> F[Exécution de Tâche - Service IA / QC]
+    E --> G[Exécution de Tâche - Service IA / QC]
+    F -- Résultat / Statut --> B
+    G -- Résultat / Statut --> B
+    B -- Résultat / Statut --> A
+
+    %% Styles personnalisés
+    classDef broker fill:#f9f,stroke:#333,stroke-width:2px
+    classDef worker fill:#add8e6,stroke:#318ce7,stroke-width:2px
+    classDef task fill:#90ee90,stroke:#32cd32,stroke-width:2px
+    
+    class B broker
+    class D,E worker
+    class F,G task

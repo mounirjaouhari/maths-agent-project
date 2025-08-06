@@ -1,0 +1,159 @@
+openapi: 3.0.0
+info:
+  title: Assembly Export Service Internal API
+  description: API interne pour l'assemblage et l'exportation des documents mathématiques finaux dans divers formats.
+  version: 1.0.0
+servers:
+  - url: http://assembly-export-service-service:80 # URL interne du service Kubernetes
+    description: Environnement Kubernetes interne
+paths:
+  /internal/assemble/document/{documentVersionId}:
+    post:
+      summary: Déclencher le processus d'assemblage d'une version de document
+      operationId: assembleDocumentInternal
+      parameters:
+        - name: documentVersionId
+          in: path
+          required: true
+          description: ID de la version du document à assembler
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Document assemblé avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  document_id:
+                    type: string
+                    format: uuid
+                    description: ID du document assemblé
+                  status:
+                    type: string
+                    example: "assembled"
+        '400':
+          description: Paramètres d'entrée invalides ou document non validé
+        '404':
+          description: Version du document non trouvée
+        '500':
+          description: Erreur interne du service ou échec de l'assemblage
+  /internal/export/document/{documentVersionId}:
+    post:
+      summary: Déclencher l'exportation d'une version de document dans les formats spécifiés
+      operationId: exportDocumentInternal
+      parameters:
+        - name: documentVersionId
+          in: path
+          required: true
+          description: ID de la version du document à exporter
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExportDocumentRequestInternal'
+      responses:
+        '200':
+          description: Exportation déclenchée avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  export_task_id:
+                    type: string
+                    format: uuid
+                    description: ID de la tâche d'exportation (pour le suivi asynchrone)
+                  status:
+                    type: string
+                    example: "export_in_progress"
+        '400':
+          description: Paramètres d'entrée invalides ou formats non supportés
+        '404':
+          description: Version du document non trouvée
+        '500':
+          description: Erreur interne du service ou échec du déclenchement de l'exportation
+  /internal/exports/{exportId}/status:
+    get:
+      summary: Obtenir le statut d'une tâche d'exportation spécifique
+      operationId: getExportStatusInternal
+      parameters:
+        - name: exportId
+          in: path
+          required: true
+          description: ID de la tâche d'exportation
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Statut de l'exportation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExportStatusResponseInternal'
+        '404':
+          description: Tâche d'exportation non trouvée
+components:
+  schemas:
+    ExportDocumentRequestInternal:
+      type: object
+      required:
+        - formats
+      properties:
+        formats:
+          type: array
+          items:
+            type: string
+            enum: [pdf, latex_source, markdown, html, wiki_mediawiki, wiki_confluence] # Exemples de formats supportés
+          description: Liste des formats d'exportation souhaités
+    ExportStatusResponseInternal:
+      type: object
+      properties:
+        export_id:
+          type: string
+          format: uuid
+        document_version_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, in_progress, completed, failed]
+          example: "completed"
+        progress:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          description: Pourcentage de progression de l'exportation
+        exported_files:
+          type: array
+          items:
+            type: object
+            properties:
+              format:
+                type: string
+              url:
+                type: string
+                format: uri
+                description: URL de téléchargement du fichier exporté
+              error:
+                type: string
+                nullable: true
+                description: Message d'erreur si l'exportation d'un format a échoué
+        error_message:
+          type: string
+          nullable: true
+          description: Message d'erreur général si la tâche d'exportation a échoué
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time

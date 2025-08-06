@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package qc;
+
+// Importez les types de données nécessaires
+// import "google/protobuf/timestamp.proto";
+// import "google/protobuf/wrappers.proto";
+
+// Service de Contrôle Qualité et Vérification
+service QCService {
+  // Déclenche une analyse complète pour un bloc de contenu
+  rpc AnalyzeContentBlock (AnalyzeContentBlockRequest) returns (QCReport);
+  // Déclenche une analyse pour un exercice (énoncé et solution)
+  rpc AnalyzeExercise (AnalyzeExerciseRequest) returns (QCReport);
+  // Vérifie la justesse d'une seule assertion ou formule mathématique
+  rpc VerifyMathematicalStatement (VerifyMathematicalStatementRequest) returns (VerificationResult);
+  // Déclenche une analyse de cohérence sur une partie ou l'intégralité d'une version de document
+  rpc AnalyzeCoherence (AnalyzeCoherenceRequest) returns (QCReport);
+}
+
+// Message de requête pour AnalyzeContentBlock
+message AnalyzeContentBlockRequest {
+  string block_id = 1; // ID du bloc de contenu en cours d'analyse
+  string content_latex = 2; // Contenu du bloc en format LaTeX
+  string block_type = 3; // Type du bloc de contenu (definition, intuition, etc.)
+  string level = 4; // Niveau pédagogique cible
+  string style = 5; // Style rédactionnel
+  map<string, string> context = 6; // Contexte supplémentaire pour l'analyse
+}
+
+// Message de requête pour AnalyzeExercise
+message AnalyzeExerciseRequest {
+  string exercise_id = 1; // ID de l'exercice
+  string prompt_latex = 2; // L'énoncé de l'exercice en LaTeX
+  string solution_latex = 3; // La solution de l'exercice en LaTeX (optionnel)
+  string level = 4; // Niveau cible
+  string exercise_type = 5; // Type de l'exercice (calculation, proof, application)
+  map<string, string> context = 6; // Contexte supplémentaire pour l'analyse
+}
+
+// Message de requête pour VerifyMathematicalStatement
+message VerifyMathematicalStatementRequest {
+  string statement_latex = 1; // La formule ou l'assertion mathématique en LaTeX à vérifier
+  map<string, string> context = 2; // Contexte pour la vérification (hypothèses, définitions pertinentes)
+}
+
+// Message de réponse pour la vérification mathématique
+message VerificationResult {
+  string status = 1; // Statut de la vérification (verified, refuted, undetermined, error, syntax_error)
+  string details = 2; // Détails ou message d'erreur de la vérification
+  float confidence = 3; // Niveau de confiance dans le résultat (0.0 à 1.0)
+}
+
+// Message de requête pour AnalyzeCoherence
+message AnalyzeCoherenceRequest {
+  string document_version_id = 1; // ID de la version du document à analyser
+  string scope = 2; // Portée de l'analyse de cohérence (section, chapter, document)
+  map<string, string> context = 3; // Contexte supplémentaire pour l'analyse
+}
+
+// Message pour le rapport QC
+message QCReport {
+  float overall_score = 1; // Score global de 0 à 100
+  string status = 2; // Statut (passed, failed, partial_success)
+  repeated QCProblem problems = 3; // Liste des problèmes détectés
+  map<string, string> details = 4; // Détails bruts des analyses par sous-module (math, pedago, coherence)
+}
+
+// Message pour un problème QC
+message QCProblem {
+  string type = 1; // Type de problème (math_error, clarity_issue, etc.)
+  string severity = 2; // Sévérité (critical, major, minor, warning)
+  string description = 3; // Description du problème
+  Location location = 4; // Localisation précise du problème
+  string suggested_fix = 5; // Suggestion de correction
+}
+
+// Message pour la localisation d'un problème
+message Location {
+  int32 line = 1;
+  int32 char_start = 2;
+  int32 char_end = 3;
+  // Ajoutez d'autres champs de localisation si nécessaire (ex: formula_id)
+}

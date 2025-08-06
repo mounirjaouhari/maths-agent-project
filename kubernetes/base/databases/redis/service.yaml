@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service # Nom du service Kubernetes
+  labels:
+    app: redis # Labels pour identifier le service
+spec:
+  selector:
+    app: redis # Sélecteur pour les pods que ce service va exposer (doit correspondre aux labels du déploiement Redis)
+  ports:
+    - protocol: TCP # Protocole utilisé (TCP)
+      port: 6379 # Le port sur lequel le service écoute (port par défaut de Redis)
+      targetPort: 6379 # Le port sur lequel les conteneurs Redis écoutent
+  type: ClusterIP # Type de service: ClusterIP rend le service accessible uniquement à l'intérieur du cluster.
+                  # Ce service est interne et n'est pas exposé directement à l'extérieur.

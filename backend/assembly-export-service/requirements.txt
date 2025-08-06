@@ -1,0 +1,25 @@
+# backend/assembly-export-service/requirements.txt
+# Dépendances Python pour le microservice Assembly Export Service
+
+# Framework web asynchrone
+fastapi~=0.100.0
+
+# Serveur ASGI pour FastAPI
+uvicorn[standard]~=0.22.0
+
+# Client HTTP asynchrone pour les appels inter-services (vers Persistence Service)
+httpx~=0.27.0
+
+# Validation des données (dépendance de FastAPI)
+pydantic~=2.0.0
+pydantic-settings~=2.0.0 # Pour la gestion des paramètres de configuration
+
+# Bibliothèques pour l'assemblage et l'exportation de documents
+# python-latex est un exemple pour la génération de LaTeX, mais peut être remplacé par la concaténation de chaînes
+# subprocess est utilisé pour appeler Pandoc et pdflatex, donc pas besoin d'une dépendance directe ici.
+# Si des bindings Python pour Pandoc ou d'autres outils sont utilisés, ils seraient listés ici.
+# reportlab~=4.0.0 # Exemple de lib pour générer PDF directement (si pas via LaTeX)
+
+# Dépendances partagées (ne sont pas installées directement via requirements.txt ici,
+# mais sont copiées dans l'image Docker et importées comme modules locaux)
+# shared (config, models, exceptions, utils)

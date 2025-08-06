@@ -1,0 +1,31 @@
+---
+config:
+  layout: elk
+---
+flowchart TD
+    A["Fichier Source<br>LaTeX .tex"] -- Traite --> B["Service Exportation"]
+    B -- Convertit --> C["pdflatex"] & D["Pandoc"]
+    C -- Génère --> E["Document<br>PDF .pdf"]
+    D -- Génère --> F["Document<br>Markdown .md"] & G["Document<br>HTML .html"]
+    E -- Stocke --> H["Stockage Final"]
+    F -- Stocke --> H
+    G -- Stocke --> H
+    H -- Prépare --> I["Prêt pour Utilisation"]
+    C --> note1["Note: pdflatex convertit LaTeX en PDF."]
+    D --> note2["Note: Pandoc convertit LaTeX en Markdown ou HTML."]
+    H --> note3@{ label: "Note: Le stockage final permet le téléchargement ou l'accès ultérieur." }
+    note3@{ shape: rect}
+     A:::data
+     B:::process
+     C:::external
+     D:::external
+     E:::data
+     F:::data
+     G:::data
+     H:::service
+     I:::output
+    classDef process fill:#90ee90,stroke:#32cd32,stroke-width:2px
+    classDef data fill:#ffebcd,stroke:#ffb347,stroke-width:2px
+    classDef service fill:#add8e6,stroke:#318ce7,stroke-width:2px
+    classDef external fill:#e0e0e0,stroke:#333,stroke-dasharray: 5 5
+    classDef output fill:#f0e68c,stroke:#daa520,stroke-width:2px

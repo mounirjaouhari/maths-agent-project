@@ -1,0 +1,35 @@
+---
+config:
+  layout: elk
+---
+flowchart TD
+    A[Titre du Document] --> B[Chapitre 1] & C[Chapitre 2] & D[Annexe]
+    B --> B1[Section 1.1] & B2[Section 1.2]
+    B1 --> B1_1[Bloc 1.1.1: Définition] & B1_2[Bloc 1.1.2: Intuition]
+    B2 --> B2_1[Bloc 1.2.1: Définition] & B2_2[Bloc 1.2.2: Preuve-Squelette] & B2_3[Bloc 1.2.3: Exercice]
+    C --> C1[Section 2.1]
+    D --> D1[Exercices Regroupés]
+
+    %% Notes
+    note1[Note: Le statut d'une section dépend de ses sous-éléments.<br>Ex: B1 est 'en cours' si certains blocs sont en cours.]
+    B1 --> note1
+
+    %% Status Styles
+    classDef validatedStyle fill:#90ee90,stroke:#228b22,stroke-width:2px
+    classDef pendingValidationStyle fill:#ffff99,stroke:#cc9900,stroke-width:2px
+    classDef inProgressStyle fill:#87cefa,stroke:#1e90ff,stroke-width:2px
+    classDef qcFailedStyle fill:#ff4040,stroke:#b22222,stroke-width:2px
+    classDef refinementFailedStyle fill:#ff8c00,stroke:#d2691e,stroke-width:2px
+    classDef structureStyle fill:#f0f0f0,stroke:#696969,stroke-width:1px
+    classDef defaultStyle fill:#e0e0e0,stroke:#a9a9a9,stroke-width:1px
+
+    %% Apply Styles
+    class B1_1 validatedStyle
+    class B1_2 validatedStyle
+    class B1 inProgressStyle
+    class B2_1 qcFailedStyle
+    class B2_2 pendingValidationStyle
+    class B2_3 inProgressStyle
+    class C1 defaultStyle
+    class D1 defaultStyle
+    class A,B,C,D structureStyle

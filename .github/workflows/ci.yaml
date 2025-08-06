@@ -1,0 +1,76 @@
+# Fichier placeholder pour ci.yaml
+name: CI on Pull Request
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest # Exécute le job sur une machine virtuelle Ubuntu
+
+    steps:
+    - name: Checkout Code # Étape pour récupérer le code du dépôt
+      uses: actions/checkout@v3
+
+    - name: Set up Python # Configure l'environnement Python (version 3.10)
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install Backend Dependencies # Installe les dépendances Python pour chaque service backend
+      run: |
+        # Installe Poetry, l'outil de gestion des dépendances Python
+        pip install poetry
+        # Configure Poetry pour créer les environnements virtuels dans le répertoire du projet
+        poetry config virtualenvs.in-project true
+        # Parcourt chaque répertoire de service backend et installe ses dépendances
+        # La commande find recherche les répertoires se terminant par "-service" à une profondeur de 2
+        find backend -maxdepth 2 -type d -name "*-service" -print0 | while IFS= read -r -d $'\0' service_dir; do
+          echo "Installing dependencies for $service_dir..."
+          # Vérifie si un fichier pyproject.toml (utilisé par Poetry) existe dans le répertoire du service
+          if [ -f "$service_dir/pyproject.toml" ]; then
+            (cd "$service_dir" && poetry install --no-root --only main) # Installe les dépendances de production avec Poetry
+          elif [ -f "$service_dir/requirements.txt" ]; then
+            # Si un requirements.txt est présent, utilise pip pour installer les dépendances
+            (cd "$service_dir" && pip install -r requirements.txt)
+          else
+            echo "No pyproject.toml or requirements.txt found in $service_dir, skipping dependency installation for this service."
+          fi
+        done
+      
+    - name: Run Backend Tests # Exécute les tests pour chaque service backend
+      run: |
+        # Parcourt à nouveau chaque répertoire de service backend
+        find backend -maxdepth 2 -type d -name "*-service" -print0 | while IFS= read -r -d $'\0' service_dir; do
+          echo "Running tests in $service_dir..."
+          # Vérifie si un fichier pyproject.toml existe pour ce service
+          if [ -f "$service_dir/pyproject.toml" ]; then
+            (cd "$service_dir" && poetry run pytest) # Exécute pytest via Poetry
+          elif [ -f "$service_dir/requirements.txt" ]; then
+            (cd "$service_dir" && pytest) # Exécute pytest directement si requirements.txt est utilisé
+          else
+            echo "No pyproject.toml or requirements.txt found in $service_dir, skipping backend tests for this service."
+          fi
+        done
+
+    - name: Set up Node.js # Configure l'environnement Node.js (version 18)
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Install Frontend Dependencies # Installe les dépendances JavaScript du frontend
+      run: |
+        cd frontend # Se déplace dans le répertoire du frontend
+        npm install --force # Installe les dépendances npm. --force peut être utilisé pour résoudre des conflits de dépendances, mais doit être utilisé avec prudence.
+
+    - name: Run Frontend Tests # Exécute les tests du frontend
+      run: |
+        cd frontend # Se déplace dans le répertoire du frontend
+        npm test -- --coverage # Exécute les tests npm et génère un rapport de couverture de code

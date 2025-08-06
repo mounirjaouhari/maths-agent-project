@@ -1,0 +1,47 @@
+# Fichier placeholder pour deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-deployment # Nom du déploiement Kubernetes
+  labels:
+    app: redis # Labels pour identifier le déploiement
+spec:
+  replicas: 1 # Nombre d'instances (pods) de Redis. Pour la haute disponibilité, envisager un cluster Redis.
+  selector:
+    matchLabels:
+      app: redis # Sélecteur pour les pods gérés par ce déploiement
+  template:
+    metadata:
+      labels:
+        app: redis # Labels pour les pods
+    spec:
+      containers:
+      - name: redis # Nom du conteneur
+        image: redis:6 # Image Docker de Redis (version 6 recommandée)
+        ports:
+        - containerPort: 6379 # Port par défaut de Redis
+        resources:
+          requests: # Ressources minimales requises
+            cpu: "100m" # 100 milliCPU
+            memory: "256Mi" # 256 Mégaoctets
+          limits: # Limites maximales de ressources
+            cpu: "300m" # 300 milliCPU
+            memory: "512Mi" # 512 Mégaoctets (ajuster en fonction de l'utilisation du cache)
+        livenessProbe: # Sonde de vivacité: vérifie si Redis est en cours d'exécution
+          tcpSocket:
+            port: 6379
+          initialDelaySeconds: 5 # Délai avant la première vérification
+          periodSeconds: 10 # Fréquence des vérifications
+        readinessProbe: # Sonde de préparation: vérifie si Redis est prêt à recevoir des connexions
+          tcpSocket:
+            port: 6379
+          initialDelaySeconds: 10 # Délai avant la première vérification
+          periodSeconds: 10 # Fréquence des vérifications
+        env: # Variables d'environnement pour la configuration de Redis
+        - name: REDIS_PASSWORD # Mot de passe pour l'accès à Redis
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets # Nom du secret Kubernetes contenant le mot de passe Redis
+              key: redis_password # Clé dans le secret
+        command: ["redis-server"] # Commande pour démarrer Redis
+        args: ["--requirepass", "$(REDIS_PASSWORD)"] # Argument pour exiger un mot de passe

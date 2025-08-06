@@ -1,0 +1,67 @@
+graph TD
+    %% User Interaction Layer
+    A[Professeur] -->|Utilise| B(Interface Utilisateur Web/Mobile)
+    B -->|Requêtes API| C{API Gateway}
+
+    %% Backend Services (Microservices)
+    subgraph "Backend Services"
+        C -->|Routage| D[Workflow Engine]
+        D -->|Orchestration| E((Service Persistance))
+        E -->|CRUD| F[(Bases de Données\nPostgreSQL/Neo4j)]
+        
+        D -->|Tâches Async| G[[Celery Broker]]
+        G -->|Distribue| H[Workers Celery]
+        
+        H -->|Appels| I{{Service Génération}}
+        H -->|Appels| J[[Service QC]]
+        H -->|Appels| K[/Service Raffinement\]
+        H -->|Appels| L[\Service  Export /]
+        
+        I -->|Consulte| M[(Base Connaissances)]
+        J -->|Consulte| M
+        K -->|Consulte| M
+        
+        I -->|Appels| N>APIs LLM]
+        J -->|Utilise| O>Outils Externes]
+        
+        %% Data Flows
+        I -->|Brouillon| J
+        J -->|Rapport| D
+        K -->|Instructions| I
+        D -->|État| E
+        E -->|Stockage| F
+        M -->|Lecture| F
+        H -->|Résultats| D
+        L -->|Contenu| E
+        L -->|Fichiers| B
+    end
+
+    %% External Systems
+    N -.->|Cloud| P((OpenAI/Gemini))
+    O -.->|Cloud| Q((Wolfram/Lean))
+
+    %% Styles
+    classDef user fill:#c9f,stroke:#333;
+    classDef gateway fill:#9cf,stroke:#333;
+    classDef service fill:#aef,stroke:#333;
+    classDef db fill:#cfc,stroke:#333;
+    classDef queue fill:#fcc,stroke:#333;
+    classDef worker fill:#f9c,stroke:#333;
+    classDef external fill:#ccc,stroke-dasharray: 5 5;
+    
+    class A,B user;
+    class C gateway;
+    class D,E,I,J,K,L service;
+    class F,M db;
+    class G queue;
+    class H worker;
+    class N,O,P,Q external;
+
+    %% Notes (syntaxe corrigée)
+    B:::user -.- note1["Interface intuitive<br>avec prévisualisation<br>et corrections"]
+    D:::service -.- note2["Orchestrateur principal<br>Gère les états workflow<br>et les reprises"]
+    I:::service -.- note3["Gère les prompts<br>et l'abstraction LLM"]
+    J:::service -.- note4["Vérification automatique<br>et manuelle"]
+    K:::service -.- note5["Analyse sémantique<br>des feedbacks"]
+    L:::service -.- note6["Génération PDF/LaTeX<br>et formats interactifs"]
+    F:::db -.- note7["Stockage versionné<br>des contenus"]

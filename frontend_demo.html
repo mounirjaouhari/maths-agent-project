@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto-Maths - Démonstration Frontend</title>
+    <link rel="icon" href="https://placehold.co/32x32/007bff/ffffff?text=AM" type="image/x-icon">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" xintegrity="sha512-Fo3rlrZj/k7ujTnHg4CGR2D7kSs0V4LLanw2qksYuRlEzO+tcaEPQogQ0KaoGN26/zrn20ImR1DfuLWnOo7aBA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; margin: 0; padding: 0; background-color: #f0f2f5; color: #333; }
+        html, body, #root { height: 100%; width: 100%; }
+        /* Styles pour l'éditeur TipTap et KaTeX */
+        .ProseMirror { min-height: 300px; outline: none; }
+        .ProseMirror p.is-empty::before { content: attr(data-placeholder); float: left; color: #adb5bd; pointer-events: none; height: 0; }
+        .math-inline-rendered, .math-block-rendered { cursor: pointer; display: inline-block; vertical-align: middle; margin: 0 2px; padding: 1px 3px; border-radius: 4px; transition: background-color 0.2s ease-in-out; }
+        .math-inline-rendered:hover, .math-block-rendered:hover { background-color: #e0e7ff; }
+        .math-block-rendered { display: block; text-align: center; margin: 10px auto; padding: 10px; background-color: #f8faff; border: 1px solid #e0e7ff; }
+        .tiptap-math-edit-input, .tiptap-math-edit-textarea { width: 100%; padding: 8px; border: 1px solid #a0c0ff; border-radius: 4px; font-family: 'monospace'; font-size: 0.9rem; background-color: #f0f8ff; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
+        .tiptap-math-edit-textarea { min-height: 80px; resize: vertical; }
+        /* Animations pour le modal */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scaleIn { from { transform: scale(0.95); opacity: 0.8; } to { transform: scale(1); opacity: 1; } }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        .animate-scale-in { animation: scaleIn 0.3s ease-out forwards; }
+    </style>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/@reduxjs/toolkit@2.2.5/dist/redux-toolkit.umd.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-redux@9.1.2/dist/react-redux.min.js"></script>
+    <script crossorigin src="https://unpkg.com/@tanstack/react-query@5.40.0/build/umd/index.production.js"></script>
+    <script crossorigin src="https://unpkg.com/react-router-dom@6.23.1/dist/main.umd.js"></script>
+    <script crossorigin src="https://unpkg.com/@tiptap/core@2.4.0/dist/tiptap-core.umd.js"></script>
+    <script crossorigin src="https://unpkg.com/@tiptap/react@2.4.0/dist/tiptap-react.umd.js"></script>
+    <script crossorigin src="https://unpkg.com/@tiptap/starter-kit@2.4.0/dist/tiptap-starter-kit.umd.js"></script>
+    <script crossorigin src="https://unpkg.com/@tiptap/extension-placeholder@2.4.0/dist/tiptap-extension-placeholder.umd.js"></script>
+    <script crossorigin src="https://unpkg.com/@tiptap/extension-document@2.4.0/dist/tiptap-extension-document.umd.js"></script>
+    <script crossorigin src="https://unpkg.com/@tiptap/extension-paragraph@2.4.0/dist/tiptap-extension-paragraph.umd.js"></script>
+    <script crossorigin src="https://unpkg.com/@tiptap/extension-text@2.4.0/dist/tiptap-extension-text.umd.js"></script>
+    <script crossorigin src="https://unpkg.com/@tiptap/extension-bold@2.4.0/dist/tiptap-extension-bold.umd.js"></script>
+    <script crossorigin src="https://unpkg.com/@tiptap/extension-italic@2.4.0/dist/tiptap-extension-italic.umd.js"></script>
+    <script crossorigin src="https://unpkg.com/@tiptap/extension-bullet-list@2.4.0/dist/tiptap-extension-bullet-list.umd.js"></script>
+    <script crossorigin src="https://unpkg.com/@tiptap/extension-list-item@2.4.0/dist/tiptap-extension-list-item.umd.js"></script>
+    <script crossorigin src="https://unpkg.com/@tiptap/extension-ordered-list@2.4.0/dist/tiptap-extension-ordered-list.umd.js"></script>
+    <script crossorigin src="https://unpkg.com/@tiptap/extension-heading@2.4.0/dist/tiptap-extension-heading.umd.js"></script>
+    <script src="https://unpkg.com/katex@0.16.10/dist/katex.min.js"></script>
+</head>
+<body class="antialiased">
+    <div id="root" class="min-h-screen flex flex-col">
+        <div class="flex items-center justify-center min-h-screen text-gray-500">
+            Chargement de l'application...
+        </div>
+    </div>
+
+    <script type="module">
+        const React = window.React;
+        const ReactDOM = window.ReactDOM;
+        const Provider = window.ReactRedux.Provider; // Accès direct
+        const configureStore = window.RTK.configureStore; // Accès direct
+        const QueryClient = window.ReactQuery.QueryClient; // Accès direct
+        const QueryClientProvider = window.ReactQuery.QueryClientProvider; // Accès direct
+        const useQuery = window.ReactQuery.useQuery; // Accès direct
+        const useMutation = window.ReactQuery.useMutation; // Accès direct
+        const useQueryClient = window.ReactQuery.useQueryClient; // Accès direct
+        const BrowserRouter = window.ReactRouterDOM.BrowserRouter; // Accès direct
+        const Routes = window.ReactRouterDOM.Routes; // Accès direct
+        const Route = window.ReactRouterDOM.Route; // Accès direct
+        const Link = window.ReactRouterDOM.Link; // Accès direct
+        const useNavigate = window.ReactRouterDOM.useNavigate; // Accès direct
+        const useParams = window.ReactRouterDOM.useParams; // Accès direct
+        
+        // --- Mock Backend Data and API Service ---
+        const mockUsers = [
+            { user_id: "user-123", username: "test@example.com", password_hash: "$2b$12$K1r.mQ1.Z8.Z8.Z8.Z8.Z8.Z8.Z8.Z8.Z8.Z8.Z8.Z8.Z8", created_at: new Date().toISOString(), is_active: true, role: "user" }
+        ];
+        let mockProjects = [
+            { project_id: "proj-1", user_id: "user-123", title: "Introduction à l'Algèbre Linéaire", subject: "Algèbre Linéaire", level: "L2", style: "Hybride", mode: "Supervisé", created_at: new Date().toISOString(), updated_at: new Date().toISOString(), status: "in_progress", current_step: "Rédaction Section 1.1",
+                document_structure: { chapters: [{ chapter_id: "chap1", title: "Chapitre 1: Espaces Vectoriels", sections: [{ section_id: "sec1.1", title: "Définitions Fondamentales", blocks: [{ block_id: "block-1-1-1", block_type: "definition" }, { block_id: "block-1-1-2", block_type: "intuition" }] }] }] },
+                content_blocks: [
+                    { block_id: "block-1-1-1", version_id: "v1", block_type: "definition", content_latex: "\\textbf{Définition (Espace Vectoriel).} Un ensemble $E$ est un $\\mathbb{K}$-espace vectoriel si...", status: "validated", qc_report: { overall_score: 95, status: "passed", problems: [] }, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), refinement_attempts: 0 },
+                    { block_id: "block-1-1-2", version_id: "v1", block_type: "intuition", content_latex: "Intuitivement, un espace vectoriel est un ensemble où l'on peut additionner des 'vecteurs' et les multiplier par des 'nombres' (scalaires).", status: "pending_validation", qc_report: { overall_score: 70, status: "partial_success", problems: [{type: "clarity_issue", severity: "minor", description: "L'analogie pourrait être plus concrète."}] }, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), refinement_attempts: 0 }
+                ]
+            },
+            { project_id: "proj-2", user_id: "user-123", title: "Calcul Différentiel Avancé", subject: "Analyse", level: "M1", style: "Bourbaki", mode: "Autonome", created_at: new Date().toISOString(), updated_at: new Date().toISOString(), status: "in_progress", current_step: "Génération Théorème 2.1",
+                document_structure: { chapters: [{ chapter_id: "chap2", title: "Chapitre 2: Différentiabilité", sections: [{ section_id: "sec2.1", title: "Théorèmes Fondamentaux", blocks: [{ block_id: "block-2-1-1", block_type: "proof_skeleton" }] }] }] },
+                content_blocks: [
+                    { block_id: "block-2-1-1", version_id: "v1", block_type: "proof_skeleton", content_latex: "Le squelette de preuve du théorème de la fonction inverse est...", status: "qc_failed", qc_report: { overall_score: 40, status: "failed", problems: [{type: "math_error", severity: "critical", description: "Une étape logique est incorrecte."}] }, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), refinement_attempts: 1 }
+                ]
+            },
+            { project_id: "proj-3", user_id: "user-123", title: "Géométrie Euclidienne", subject: "Géométrie", level: "L1", style: "Hybride", mode: "Supervisé", created_at: new Date().toISOString(), updated_at: new Date().toISOString(), status: "completed_exported", current_step: "Exporté",
+                document_structure: { chapters: [{ chapter_id: "chap3", title: "Chapitre 3: Triangles", sections: [{ section_id: "sec3.1", title: "Propriétés de Base", blocks: [{ block_id: "block-3-1-1", block_type: "definition" }] }] }] },
+                content_blocks: [
+                    { block_id: "block-3-1-1", version_id: "v1", block_type: "definition", content_latex: "Un triangle est un polygone à trois côtés.", status: "validated", qc_report: { overall_score: 98, status: "passed", problems: [] }, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), refinement_attempts: 0 }
+                ]
+            }
+        ];
+
+        // Simple password hashing/verification mock
+        const bcrypt = {
+            hashSync: (password) => `$2b$12$K1r.mQ1.Z8.Z8.Z8.Z8.Z8.Z8.Z8.Z8.Z8.Z8.Z8.Z8.Z8`, // Mocked hash
+            compareSync: (password, hash) => password === "testpassword" && hash === "$2b$12$K1r.mQ1.Z8.Z8.Z8.Z8.Z8.Z8.Z8.Z8.Z8.Z8.Z8" // Simple comparison
+        };
+
+        const apiService = {
+            registerUser: async (userData) => {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        if (mockUsers.some(u => u.username === userData.username)) {
+                            reject({ message: "Le nom d'utilisateur existe déjà.", detail: "Conflit", status: 409 });
+                        } else {
+                            const newUser = {
+                                user_id: `user-${Date.now()}`,
+                                username: userData.username,
+                                password_hash: bcrypt.hashSync(userData.password),
+                                created_at: new Date().toISOString(),
+                                is_active: true,
+                                role: "user"
+                            };
+                            mockUsers.push(newUser);
+                            resolve(newUser);
+                        }
+                    }, 500);
+                });
+            },
+            loginUser: async (username, password) => {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        const user = mockUsers.find(u => u.username === username);
+                        if (!user || !bcrypt.compareSync(password, user.password_hash)) {
+                            reject({ message: "Nom d'utilisateur ou mot de passe incorrect.", status: 401 });
+                        } else {
+                            const accessToken = `mock-jwt-token-${user.user_id}-${Date.now()}`;
+                            localStorage.setItem('accessToken', accessToken); // Mock localStorage
+                            resolve({ access_token: accessToken, token_type: "bearer" });
+                        }
+                    }, 500);
+                });
+            },
+            getProjects: async (statusFilter = '') => {
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        let filteredProjects = mockProjects;
+                        if (statusFilter) {
+                            filteredProjects = mockProjects.filter(p => p.status === statusFilter);
+                        }
+                        resolve(filteredProjects);
+                    }, 500);
+                });
+            },
+            getProject: async (projectId) => {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        const project = mockProjects.find(p => p.project_id === projectId);
+                        if (project) {
+                            resolve(project);
+                        } else {
+                            reject({ message: "Projet non trouvé.", status: 404 });
+                        }
+                    }, 500);
+                });
+            },
+            createProject: async (projectData) => {
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        const newProject = {
+                            project_id: `proj-${Date.now()}`,
+                            user_id: "user-123", // Mock user ID
+                            ...projectData,
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString(),
+                            status: "draft",
+                            document_structure: { chapters: [{ chapter_id: `chap-${Date.now()}`, title: projectData.title, sections: [{ section_id: `sec-${Date.now()}`, title: "Introduction", blocks: [{ block_id: `block-${Date.now()}`, block_type: "text" }] }] }] },
+                            content_blocks: [
+                                { block_id: `block-${Date.now()}`, version_id: "v1", block_type: "text", content_latex: "Bienvenue dans votre nouveau projet ! Commencez à rédiger ici.", status: "draft", qc_report: null, created_at: new Date().toISOString(), updated_at: new Date().toISOString(), refinement_attempts: 0 }
+                            ]
+                        };
+                        mockProjects.push(newProject);
+                        resolve(newProject);
+                    }, 500);
+                });
+            },
+            updateProject: async (projectId, updateData) => {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        const projectIndex = mockProjects.findIndex(p => p.project_id === projectId);
+                        if (projectIndex > -1) {
+                            mockProjects[projectIndex] = { ...mockProjects[projectIndex], ...updateData, updated_at: new Date().toISOString() };
+                            resolve(mockProjects[projectIndex]);
+                        } else {
+                            reject({ message: "Projet non trouvé.", status: 404 });
+                        }
+                    }, 500);
+                });
+            },
+            deleteProject: async (projectId) => {
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        mockProjects = mockProjects.filter(p => p.project_id !== projectId);
+                        resolve(null); // 204 No Content
+                    }, 500);
+                });
+            },
+            sendWorkflowSignal: async (projectId, signalData) => {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        const project = mockProjects.find(p => p.project_id === projectId);
+                        if (project) {
+                            // Simulate workflow state changes
+                            if (signalData.signal_type === 'VALIDATED' && signalData.block_id) {
+                                const block = project.content_blocks.find(b => b.block_id === signalData.block_id);
+                                if (block) block.status = 'validated';
+                                project.status = 'in_progress'; // Or advance step
+                            } else if (signalData.signal_type === 'REDO' && signalData.block_id) {
+                                const block = project.content_blocks.find(b => b.block_id === signalData.block_id);
+                                if (block) block.status = 'qc_failed'; // Simulate needing refinement
+                                project.status = 'in_progress';
+                            } else if (signalData.signal_type === 'ALL_APPROVED') {
+                                project.status = 'export_pending';
+                            }
+                            project.updated_at = new Date().toISOString();
+                            resolve(project);
+                        } else {
+                            reject({ message: "Projet non trouvé.", status: 404 });
+                        }
+                    }, 1000); // Simulate network delay
+                });
+            },
+            getQcReportForBlock: async (blockId) => {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        for (const proj of mockProjects) {
+                            const block = proj.content_blocks.find(b => b.block_id === blockId);
+                            if (block && block.qc_report) {
+                                resolve(block.qc_report);
+                                return;
+                            }
+                        }
+                        reject({ message: "Rapport QC non trouvé.", status: 404 });
+                    }, 300);
+                });
+            },
+            downloadExportedDocument: async (projectId) => {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        const project = mockProjects.find(p => p.project_id === projectId);
+                        if (project && project.status === 'completed_exported') {
+                            resolve({ download_url: "https://www.africau.edu/images/default/sample.pdf" }); // Sample PDF
+                        } else {
+                            reject({ message: "Exportation non disponible.", status: 400 });
+                        }
+                    }, 1500);
+                });
+            },
+            updateContentBlock: async (blockId, updateData) => {
+                return new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        for (const proj of mockProjects) {
+                            const blockIndex = proj.content_blocks.findIndex(b => b.block_id === blockId);
+                            if (blockIndex > -1) {
+                                proj.content_blocks[blockIndex] = { ...proj.content_blocks[blockIndex], ...updateData, updated_at: new Date().toISOString() };
+                                resolve(proj.content_blocks[blockIndex]);
+                                return;
+                            }
+                        }
+                        reject({ message: "Bloc de contenu non trouvé.", status: 404 });
+                    }, 300);
+                });
+            }
+        };
+
+        // --- Frontend Components ---
+
+        // ConfirmationModal.js
+        const ConfirmationModal = ({ message, onConfirm, onCancel, type = 'confirm', title = '' }) => {
+            return React.createElement('div', { className: "fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 animate-fade-in" },
+                React.createElement('div', { className: "bg-white rounded-lg shadow-xl p-6 w-11/12 md:w-1/3 transform scale-95 animate-scale-in" },
+                    React.createElement('h3', { className: "text-lg font-semibold text-gray-800 mb-4" }, title || (type === 'confirm' ? 'Confirmation' : 'Notification')),
+                    React.createElement('p', { className: "text-gray-700 mb-6" }, message),
+                    React.createElement('div', { className: "flex justify-end space-x-3" },
+                        type === 'confirm' && React.createElement('button', { onClick: onCancel, className: "px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 transition-colors duration-200 shadow-sm" }, "Annuler"),
+                        React.createElement('button', { onClick: onConfirm, className: `px-4 py-2 rounded-md transition-colors duration-200 shadow-sm ${type === 'confirm' ? 'bg-red-500 text-white hover:bg-red-600' : 'bg-blue-500 text-white hover:bg-blue-600'}` }, type === 'confirm' ? 'Confirmer' : 'OK')
+                    )
+                )
+            );
+        };
+
+        // RichTextEditor.js
+        const useEditor = window.TiptapReact.useEditor;
+        const EditorContent = window.TiptapReact.EditorContent;
+        const StarterKit = window.TiptapStarterKit.default;
+        const Node = window.TiptapCore.Node;
+        const mergeAttributes = window.TiptapCore.mergeAttributes;
+        const Placeholder = window.TiptapExtensionPlaceholder.default;
+        const Document = window.TiptapExtensionDocument.default;
+        const Paragraph = window.TiptapExtensionParagraph.default;
+        const Text = window.TiptapExtensionText.default;
+        const Bold = window.TiptapExtensionBold.default;
+        const Italic = window.TiptapExtensionItalic.default;
+        const BulletList = window.TiptapExtensionBulletList.default;
+        const ListItem = window.TiptapExtensionListItem.default;
+        const OrderedList = window.TiptapExtensionOrderedList.default;
+        const Heading = window.TiptapExtensionHeading.default;
+
+        const logger = { info: console.log, warn: console.warn, error: console.error };
+
+        const MathInline = Node.create({
+            name: 'mathInline', group: 'inline', inline: true, atom: true, selectable: true,
+            addAttributes() { return { latex: { default: '', parseHTML: element => element.getAttribute('data-latex') } }; },
+            parseHTML() { return [{ tag: 'span[data-type="math-inline"]', getAttrs: element => ({ latex: element.getAttribute('data-latex') }) }]; },
+            renderHTML({ HTMLAttributes, node }) {
+                const latex = node.attrs.latex; let html = ''; try { html = katex.renderToString(latex, { throwOnError: false, displayMode: false }); } catch (e) { logger.error('Erreur de rendu KaTeX (inline):', e); html = `<span style="color: red; background-color: #ffe0e0; padding: 2px 4px; border-radius: 4px;">Erreur LaTeX: ${latex}</span>`; }
+                return ['span', mergeAttributes(HTMLAttributes, { 'data-type': 'math-inline', 'data-latex': latex, class: 'math-inline-rendered' }), 0];
+            },
+            addNodeView() {
+                return ({ node, getPos, editor }) => {
+                    const dom = document.createElement('span'); dom.classList.add('math-inline-view'); dom.setAttribute('data-type', 'math-inline'); dom.setAttribute('data-latex', node.attrs.latex);
+                    const renderMath = (latex) => { try { dom.innerHTML = katex.renderToString(latex, { throwOnError: false, displayMode: false }); } catch (e) { dom.innerHTML = `<span style="color: red; background-color: #ffe0e0; padding: 2px 4px; border-radius: 4px;">Erreur LaTeX: ${latex}</span>`; } };
+                    renderMath(node.attrs.latex);
+                    dom.addEventListener('dblclick', () => {
+                        const currentLatex = node.attrs.latex; const input = document.createElement('input'); input.type = 'text'; input.value = currentLatex; input.classList.add('tiptap-math-edit-input');
+                        dom.replaceWith(input); input.focus();
+                        const finishEditing = () => {
+                            const newLatex = input.value; editor.chain().focus().setNodeSelection(getPos()).updateAttributes(MathInline.name, { latex: newLatex }).run();
+                            input.replaceWith(dom);
+                        };
+                        input.addEventListener('blur', finishEditing); input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { finishEditing(); } });
+                    });
+                    return {
+                        dom, update: (updatedNode) => {
+                            if (updatedNode.attrs.latex !== node.attrs.latex) { node = updatedNode; renderMath(node.attrs.latex); return true; }
+                            return false;
+                        }, destroy: () => { dom.removeEventListener('dblclick', () => { }); },
+                    };
+                };
+            },
+        });
+
+        const MathBlock = Node.create({
+            name: 'mathBlock', group: 'block', content: 'text*', atom: true, selectable: true,
+            addAttributes() { return { latex: { default: '', parseHTML: element => element.getAttribute('data-latex') } }; },
+            parseHTML() { return [{ tag: 'div[data-type="math-block"]', getAttrs: element => ({ latex: element.getAttribute('data-latex') }) }]; },
+            renderHTML({ HTMLAttributes, node }) {
+                const latex = node.attrs.latex; let html = ''; try { html = katex.renderToString(latex, { throwOnError: false, displayMode: true }); } catch (e) { logger.error('Erreur de rendu KaTeX (bloc):', e); html = `<div style="color: red; background-color: #ffe0e0; padding: 8px; border-radius: 4px; text-align: center;">Erreur LaTeX: ${latex}</div>`; }
+                return ['div', mergeAttributes(HTMLAttributes, { 'data-type': 'math-block', 'data-latex': latex, class: 'math-block-rendered' }), 0];
+            },
+            addNodeView() {
+                return ({ node, getPos, editor }) => {
+                    const dom = document.createElement('div'); dom.classList.add('math-block-view'); dom.setAttribute('data-type', 'math-block'); dom.setAttribute('data-latex', node.attrs.latex);
+                    const renderMath = (latex) => { try { dom.innerHTML = katex.renderToString(latex, { throwOnError: false, displayMode: true }); } catch (e) { dom.innerHTML = `<div style="color: red; background-color: #ffe0e0; padding: 8px; border-radius: 4px; text-align: center;">Erreur LaTeX: ${latex}</div>`; } };
+                    renderMath(node.attrs.latex);
+                    dom.addEventListener('dblclick', () => {
+                        const currentLatex = node.attrs.latex; const textarea = document.createElement('textarea'); textarea.value = currentLatex; textarea.classList.add('tiptap-math-edit-textarea');
+                        dom.replaceWith(textarea); textarea.focus();
+                        const finishEditing = () => {
+                            const newLatex = textarea.value; editor.chain().focus().setNodeSelection(getPos()).updateAttributes(MathBlock.name, { latex: newLatex }).run();
+                            textarea.replaceWith(dom);
+                        };
+                        textarea.addEventListener('blur', finishEditing); textarea.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); finishEditing(); } });
+                    });
+                    return {
+                        dom, update: (updatedNode) => {
+                            if (updatedNode.attrs.latex !== node.attrs.latex) { node = updatedNode; renderMath(node.attrs.latex); return true; }
+                            return false;
+                        }, destroy: () => { dom.removeEventListener('dblclick', () => { }); },
+                    };
+                };
+            },
+        });
+
+        const getFullLatexFromTiptapJSON = (jsonContent) => {
+            let fullLatex = '';
+            const traverse = (node) => {
+                if (!node) return;
+                if (node.type === 'mathInline') { fullLatex += `$${node.attrs.latex}$`; } else if (node.type === 'mathBlock') { fullLatex += `\\[${node.attrs.latex}\\]\n\n`; } else if (node.text) { fullLatex += node.text; }
+                if (node.content) { node.content.forEach(child => traverse(child)); }
+                if (node.type === 'paragraph' || node.type === 'heading') { fullLatex += '\n\n'; }
+            };
+            if (jsonContent && jsonContent.content) { jsonContent.content.forEach(node => traverse(node)); }
+            return fullLatex.trim();
+        };
+
+        const RichTextEditor = React.forwardRef(({ content, onContentChange, editable = true, placeholderText = "Commencez à rédiger votre contenu mathématique ici..." }, ref) => {
+            const editor = useEditor({
+                extensions: [
+                    StarterKit.configure({ heading: { levels: [1, 2, 3] } }),
+                    MathInline, MathBlock, Placeholder.configure({ placeholder: placeholderText }),
+                ], content: content, editable: editable,
+                onUpdate: ({ editor }) => {
+                    const jsonContent = editor.getJSON(); const htmlContent = editor.getHTML(); const currentFullLatex = getFullLatexFromTiptapJSON(jsonContent);
+                    onContentChange({ json: jsonContent, html: htmlContent, latex: currentFullLatex });
+                },
+            }, [editable]);
+
+            React.useImperativeHandle(ref, () => ({
+                scrollToBlock: (blockId) => {
+                    console.log(`Simulating scroll to block: ${blockId}`);
+                }
+            }));
+
+            React.useEffect(() => {
+                if (editor && content) {
+                    const currentEditorJson = editor.getJSON();
+                    if (JSON.stringify(currentEditorJson) !== JSON.stringify(content)) {
+                        editor.commands.setContent(content, false);
+                        logger.info("Editor content updated from external source.");
+                    }
+                }
+            }, [content, editor]);
+
+            const addMathInline = React.useCallback(() => { if (editor) { editor.chain().focus().insertContent('$').insertContent('$').setNodeSelection(editor.state.selection.from - 1).run(); } }, [editor]);
+            const addMathBlock = React.useCallback(() => { if (editor) { editor.chain().focus().insertContent('\\[').insertContent('\\]').setNodeSelection(editor.state.selection.from - 2).run(); } }, [editor]);
+            const addEquationEnvironment = React.useCallback(() => { if (editor) { editor.chain().focus().insertContent('\\begin{equation}\n\n\\end{equation}').setNodeSelection(editor.state.selection.from - 13).run(); } }, [editor]);
+
+            if (!editor) return null;
+            return React.createElement('div', { className: "border border-gray-300 rounded-lg shadow-sm overflow-hidden bg-white" },
+                React.createElement('div', { className: "flex flex-wrap p-2 border-b border-gray-200 bg-gray-50" },
+                    React.createElement('button', { onClick: () => editor.chain().focus().toggleBold().run(), className: `p-2 rounded-md hover:bg-gray-200 ${editor.isActive('bold') ? 'bg-gray-200' : ''}`, title: "Gras" }, React.createElement('strong', null, "B")),
+                    React.createElement('button', { onClick: () => editor.chain().focus().toggleItalic().run(), className: `p-2 rounded-md hover:bg-gray-200 ${editor.isActive('italic') ? 'bg-gray-200' : ''}`, title: "Italique" }, React.createElement('em', null, "I")),
+                    React.createElement('button', { onClick: addMathInline, className: "p-2 rounded-md hover:bg-gray-200", title: "Insérer formule inline ($...$)" }, "$f(x)$"),
+                    React.createElement('button', { onClick: addMathBlock, className: "p-2 rounded-md hover:bg-gray-200", title: "Insérer bloc formule (\\[...\\])" }, "$$\\sum$$"),
+                    React.createElement('button', { onClick: addEquationEnvironment, className: "p-2 rounded-md hover:bg-gray-200", title: "Insérer environnement equation" }, "Eq"),
+                    React.createElement('button', { onClick: () => editor.chain().focus().toggleBulletList().run(), className: `p-2 rounded-md hover:bg-gray-200 ${editor.isActive('bulletList') ? 'bg-gray-200' : ''}`, title: "Liste à puces" }, "UL"),
+                    React.createElement('button', { onClick: () => editor.chain().focus().toggleOrderedList().run(), className: `p-2 rounded-md hover:bg-gray-200 ${editor.isActive('orderedList') ? 'bg-gray-200' : ''}`, title: "Liste numérotée" }, "OL"),
+                    React.createElement('select', {
+                        onChange: (e) => editor.chain().focus().toggleHeading({ level: parseInt(e.target.value) }).run(),
+                        value: editor.isActive('heading') ? editor.state.doc.resolve(editor.state.selection.from).node().attrs.level : '',
+                        className: "p-2 rounded-md border border-gray-300 bg-white text-sm", title: "Titre"
+                    },
+                        React.createElement('option', { value: "" }, "Texte normal"),
+                        React.createElement('option', { value: "1" }, "Titre 1"),
+                        React.createElement('option', { value: "2" }, "Titre 2"),
+                        React.createElement('option', { value: "3" }, "Titre 3")
+                    )
+                ),
+                React.createElement(EditorContent, { editor: editor, className: "p-4 min-h-[300px] max-h-[600px] overflow-y-auto" })
+            );
+        });
+
+        // DocumentTree.js
+        const DocumentTree = ({ documentStructure, contentBlocks, onSelectNode }) => {
+            const getAggregatedStatus = (children, contentBlocksStatus) => {
+                if (!children || children.length === 0) return 'default';
+                const statuses = children.map(child => {
+                    if (child.type === 'block' && contentBlocksStatus[child.block_id]) return contentBlocksStatus[child.block_id].status;
+                    else if (child.sections || child.blocks) {
+                        const nestedChildren = [...(child.sections || []), ...(child.blocks || [])];
+                        return getAggregatedStatus(nestedChildren, contentBlocksStatus);
+                    }
+                    return 'default';
+                });
+                if (statuses.includes('critical_error')) return 'critical_error';
+                if (statuses.includes('generation_failed') || statuses.includes('refinement_failed') || statuses.includes('qc_failed')) return 'failed';
+                if (statuses.includes('pending_validation')) return 'pending_validation';
+                if (statuses.includes('generation_in_progress') || statuses.includes('qc_in_progress') || statuses.includes('refinement_in_progress')) return 'in_progress';
+                if (statuses.some(s => s !== 'validated' && s !== 'archived' && s !== 'default')) return 'in_progress';
+                if (statuses.every(s => s === 'validated' || s === 'archived' || s === 'default')) return 'validated';
+                return 'default';
+            };
+
+            const TreeNode = ({ node, onSelectNode, contentBlocksStatus }) => {
+                const { id, title, type, blocks, sections, chapter_id, section_id, block_id } = node;
+                const nodeId = id || chapter_id || section_id || block_id;
+                let status = 'default'; 
+                let icon = React.createElement('i', { className: "fas fa-circle text-gray-400" }); // Font Awesome
+                let statusColorClass = 'text-gray-500';
+
+                if (type === 'block') status = contentBlocksStatus[nodeId]?.status || 'default';
+                else { const childrenToAggregate = [...(sections || []), ...(blocks || [])]; status = getAggregatedStatus(childrenToAggregate, contentBlocksStatus); }
+
+                switch (status) {
+                    case 'validated': icon = React.createElement('i', { className: "fas fa-check-circle text-green-500" }); statusColorClass = 'text-green-600'; break;
+                    case 'pending_validation': icon = React.createElement('i', { className: "fas fa-edit text-yellow-500" }); statusColorClass = 'text-yellow-600'; break;
+                    case 'in_progress': icon = React.createElement('i', { className: "fas fa-hourglass-half text-blue-500 animate-pulse" }); statusColorClass = 'text-blue-600'; break;
+                    case 'qc_failed': case 'generation_failed': case 'refinement_failed': icon = React.createElement('i', { className: "fas fa-exclamation-triangle text-orange-500" }); statusColorClass = 'text-orange-600'; break;
+                    case 'critical_error': icon = React.createElement('i', { className: "fas fa-times-circle text-red-500" }); statusColorClass = 'text-red-600'; break;
+                    default: icon = React.createElement('i', { className: "fas fa-circle text-gray-400" }); statusColorClass = 'text-gray-500';
+                }
+
+                return React.createElement('li', { className: "mb-1" },
+                    React.createElement('div', { className: `flex items-center p-2 rounded-md cursor-pointer hover:bg-gray-100 transition-colors duration-200 ${statusColorClass}`, onClick: () => onSelectNode(nodeId, node) },
+                        React.createElement('span', { className: "mr-2 text-sm" }, icon),
+                        React.createElement('span', { className: "text-sm font-medium" }, title || `Bloc ${nodeId.substring(0, 4)}...`),
+                        type === 'block' && contentBlocksStatus[nodeId] && contentBlocksStatus[nodeId].qc_report && React.createElement('span', { className: `ml-auto text-xs font-semibold px-2 py-0.5 rounded-full ${contentBlocksStatus[nodeId].qc_report.overall_score >= 80 ? 'bg-green-200 text-green-800' : contentBlocksStatus[nodeId].qc_report.overall_score >= 60 ? 'bg-yellow-200 text-yellow-800' : 'bg-red-200 text-red-800'}` }, `QC: ${contentBlocksStatus[nodeId].qc_report.overall_score.toFixed(0)}%`)
+                    ),
+                    sections && sections.length > 0 && React.createElement('ul', { className: "ml-4 mt-1 border-l border-gray-200 pl-2" }, sections.map(subSection => React.createElement(TreeNode, { key: subSection.id || subSection.section_id, node: subSection, onSelectNode: onSelectNode, contentBlocksStatus: contentBlocksStatus }))),
+                    blocks && blocks.length > 0 && React.createElement('ul', { className: "ml-4 mt-1 border-l border-gray-200 pl-2" }, blocks.map(block => React.createElement(TreeNode, { key: block.block_id, node: { id: block.block_id, title: block.block_type, type: 'block' }, onSelectNode: onSelectNode, contentBlocksStatus: contentBlocksStatus })))
+                );
+            };
+
+            const contentBlocksStatus = contentBlocks.reduce((acc, block) => { acc[block.block_id] = block; return acc; }, {});
+            if (!documentStructure || !documentStructure.chapters || documentStructure.chapters.length === 0) { return React.createElement('div', { className: "p-4 text-gray-500 text-center" }, "Aucune structure de document disponible."); }
+            return React.createElement('div', { className: "font-sans" },
+                React.createElement('h3', { className: "text-lg font-semibold mb-3 text-gray-800" }, "Arborescence du Document"),
+                React.createElement('ul', { className: "space-y-1" }, documentStructure.chapters.map(chapter => React.createElement(TreeNode, { key: chapter.id || chapter.chapter_id, node: chapter, onSelectNode: onSelectNode, contentBlocksStatus: contentBlocksStatus })))
+            );
+        };
+
+        // QcReportGraph.js
+        const ProblemDetailsModal = ({ problems, onClose }) => {
+            return React.createElement('div', { className: "fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50" },
+                React.createElement('div', { className: "bg-white rounded-lg shadow-xl p-6 w-11/12 md:w-2/3 lg:w-1/2 max-h-[80vh] overflow-y-auto" },
+                    React.createElement('div', { className: "flex justify-between items-center border-b pb-3 mb-4" },
+                        React.createElement('h3', { className: "text-xl font-semibold text-gray-800" }, "Détails des Problèmes QC"),
+                        React.createElement('button', { onClick: onClose, className: "text-gray-500 hover:text-gray-700 text-2xl font-bold" }, "\u00D7")
+                    ),
+                    problems.length === 0 ? React.createElement('p', { className: "text-gray-600" }, "Aucun problème détaillé à afficher.") :
+                        React.createElement('ul', { className: "space-y-4" }, problems.map((problem, index) => React.createElement('li', { key: index, className: "border border-gray-200 rounded-md p-4" },
+                            React.createElement('div', { className: "flex justify-between items-center mb-2" },
+                                React.createElement('span', { className: `font-semibold text-sm px-2 py-0.5 rounded-full ${problem.severity === 'critical' ? 'bg-red-100 text-red-800' : problem.severity === 'major' ? 'bg-orange-100 text-orange-800' : problem.severity === 'minor' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800'}` }, problem.severity.charAt(0).toUpperCase() + problem.severity.slice(1)),
+                                React.createElement('span', { className: "text-xs text-gray-500" }, problem.type.replace(/_/g, ' '))
+                            ),
+                            React.createElement('p', { className: "text-gray-700 mb-2" }, problem.description),
+                            problem.location && React.createElement('p', { className: "text-xs text-gray-500" }, `Localisation: Ligne ${problem.location.line || 'N/A'}, Caractère ${problem.location.char_start || 'N/A'}-${problem.location.char_end || 'N/A'}`),
+                            problem.suggested_fix && React.createElement('p', { className: "text-sm text-blue-600 mt-2" }, `Suggestion: ${problem.suggested_fix}`)
+                        ))),
+                    React.createElement('div', { className: "text-right mt-4" }, React.createElement('button', { onClick: onClose, className: "px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600" }, "Fermer"))
+                )
+            );
+        };
+
+        const QcReportGraph = ({ qcReport }) => {
+            const [showModal, setShowModal] = React.useState(false);
+            if (!qcReport || !qcReport.problems) { return React.createElement('div', { className: "p-4 text-gray-500 text-center" }, "Aucun rapport QC disponible."); }
+
+            const problemTypeCounts = qcReport.problems.reduce((acc, problem) => { acc[problem.type] = (acc[problem.type] || 0) + 1; return acc; }, {});
+            const totalProblems = qcReport.problems.length;
+            const pieChartData = totalProblems > 0 ? Object.keys(problemTypeCounts).map(type => ({ type, count: problemTypeCounts[type], percentage: (problemTypeCounts[type] / totalProblems) * 100 })) : [];
+            const typeColors = { 'math_error': '#EF4444', 'clarity_issue': '#F59E0B', 'style_mismatch': '#3B82F6', 'coherence_issue': '#10B981', 'formatting_error': '#6B7280', 'pedagogic_pitfall': '#8B5CF6', 'other': '#6366F1' };
+            const getPath = (cx, cy, radius, startAngle, endAngle) => {
+                const toRadians = (angle) => angle * (Math.PI / 180);
+                const x1 = cx + radius * Math.cos(toRadians(startAngle)); const y1 = cy + radius * Math.sin(toRadians(startAngle));
+                const x2 = cx + radius * Math.cos(toRadians(endAngle)); const y2 = cy + radius * Math.sin(toRadians(endAngle));
+                const largeArcFlag = endAngle - startAngle <= 180 ? 0 : 1;
+                return `M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
+            };
+            let currentAngle = 0;
+            const pieSegments = pieChartData.map((data, index) => {
+                const angle = (data.percentage / 100) * 360; const path = getPath(100, 100, 80, currentAngle, currentAngle + angle);
+                const color = typeColors[data.type] || '#CCCCCC'; currentAngle += angle;
+                return React.createElement('path', { key: data.type, d: path, fill: color });
+            });
+
+            let scoreColorClass = 'bg-gray-200 text-gray-800';
+            if (qcReport.overall_score >= 90) scoreColorClass = 'bg-green-200 text-green-800';
+            else if (qcReport.overall_score >= 70) scoreColorClass = 'bg-yellow-200 text-yellow-800';
+            else scoreColorClass = 'bg-red-200 text-red-800';
+
+            return React.createElement('div', { className: "font-sans p-4 bg-white rounded-lg shadow-sm" },
+                React.createElement('h3', { className: "text-lg font-semibold mb-3 text-gray-800" }, "Rapport QC Résumé"),
+                React.createElement('div', { className: "mb-4 flex items-center justify-between" },
+                    React.createElement('span', { className: "text-sm font-medium text-gray-700" }, "Score Global:"),
+                    React.createElement('span', { className: `text-lg font-bold px-3 py-1 rounded-full ${scoreColorClass}` }, `${qcReport.overall_score.toFixed(0)}%`)
+                ),
+                React.createElement('div', { className: "mb-4 text-sm text-gray-700" }, "Statut: ", React.createElement('span', { className: "font-semibold" }, qcReport.status)),
+                totalProblems > 0 ? React.createElement('div', { className: "mb-4" },
+                    React.createElement('h4', { className: "text-md font-semibold mb-2 text-gray-700" }, `Répartition des Problèmes (${totalProblems} au total)`),
+                    React.createElement('div', { className: "flex flex-col items-center" },
+                        React.createElement('svg', { width: "200", height: "200", viewBox: "0 0 200 200" }, pieSegments),
+                        React.createElement('div', { className: "flex flex-wrap justify-center mt-3 text-sm" }, pieChartData.map((data, index) => React.createElement('div', { key: data.type, className: "flex items-center mr-4 mb-2" },
+                            React.createElement('span', { className: "inline-block w-3 h-3 rounded-full mr-2", style: { backgroundColor: typeColors[data.type] || '#CCCCCC' } }),
+                            `${data.type.replace(/_/g, ' ')} (${data.percentage.toFixed(1)}%)`
+                        )))
+                    )
+                ) : React.createElement('div', { className: "p-4 text-gray-500 text-center border border-gray-200 rounded-md" }, "Aucun problème détecté."),
+                React.createElement('div', { className: "text-center mt-4" },
+                    React.createElement('button', { onClick: () => setShowModal(true), className: "text-blue-600 hover:text-blue-800 text-sm font-medium" }, "Voir le rapport détaillé")
+                ),
+                showModal && React.createElement(ProblemDetailsModal, { problems: qcReport.problems, onClose: () => setShowModal(false) })
+            );
+        };
+
+        // WorkflowPanel.js
+        const WorkflowPanel = ({ project, contentBlocks, onSendSignal, onDownloadExport, currentBlock, onSelectNode }) => {
+            if (!project) return React.createElement('div', { className: "p-4 bg-white rounded-lg shadow-sm text-gray-500 text-center" }, "Chargement du projet...");
+
+            let projectStatusText = ''; let projectStatusColor = 'text-gray-600'; let projectStatusIcon = React.createElement('i', { className: "fas fa-hourglass-half text-gray-500" }); // Font Awesome
+            switch (project.status) {
+                case 'draft': projectStatusText = 'Brouillon'; projectStatusIcon = React.createElement('i', { className: "fas fa-edit text-blue-500" }); break; // Font Awesome
+                case 'in_progress': projectStatusText = `En cours - ${project.current_step || 'Étape non spécifiée'}`; projectStatusIcon = React.createElement('i', { className: "fas fa-hourglass-half text-blue-500 animate-pulse" }); break;
+                case 'completed': projectStatusText = 'Terminé'; projectStatusIcon = React.createElement('i', { className: "fas fa-check-circle text-green-500" }); projectStatusColor = 'text-green-600'; break; // Font Awesome
+                case 'export_pending': projectStatusText = 'Exportation en cours...'; projectStatusIcon = React.createElement('i', { className: "fas fa-download text-purple-500 animate-pulse" }); projectStatusColor = 'text-purple-600'; break; // Font Awesome
+                case 'completed_exported': projectStatusText = 'Terminé et Exporté'; projectStatusIcon = React.createElement('i', { className: "fas fa-check-circle text-green-500" }); projectStatusColor = 'text-green-600'; break; // Font Awesome
+                case 'error': projectStatusText = 'Erreur critique'; projectStatusIcon = React.createElement('i', { className: "fas fa-times-circle text-red-500" }); projectStatusColor = 'text-red-600'; break; // Font Awesome
+                case 'assembly_failed': projectStatusText = 'Échec d\'assemblage'; projectStatusIcon = React.createElement('i', { className: "fas fa-times-circle text-red-500" }); projectStatusColor = 'text-red-600'; break; // Font Awesome
+                case 'export_failed': projectStatusText = 'Échec d\'exportation'; projectStatusIcon = React.createElement('i', { className: "fas fa-times-circle text-red-500" }); projectStatusColor = 'text-red-600'; break; // Font Awesome
+                default: projectStatusText = project.status; break;
+            }
+
+            const canValidate = project.mode === 'Supervisé' && currentBlock && (currentBlock.status === 'pending_validation' || currentBlock.status === 'qc_passed');
+            const canRedo = project.mode === 'Supervisé' && currentBlock && (currentBlock.status === 'pending_validation' || currentBlock.status === 'qc_failed' || currentBlock.status === 'refinement_failed');
+            const canCompileAndExport = project.mode === 'Autonome' && project.status === 'completed';
+            const canDownload = project.status === 'completed_exported';
+            const qcReportToDisplay = currentBlock?.qc_report?.status === 'failed' ? currentBlock.qc_report : contentBlocks.find(b => b.qc_report?.status === 'failed')?.qc_report || contentBlocks[contentBlocks.length - 1]?.qc_report;
+
+            return React.createElement('div', { className: "flex flex-col h-full bg-white rounded-lg shadow-md p-4 space-y-6" },
+                React.createElement('div', { className: "border-b pb-4 border-gray-200" },
+                    React.createElement('h2', { className: "text-xl font-bold text-gray-800 mb-2" }, project.title),
+                    React.createElement('div', { className: "text-sm text-gray-600" },
+                        React.createElement('p', null, "Sujet: ", React.createElement('span', { className: "font-medium" }, project.subject)),
+                        React.createElement('p', null, "Niveau: ", React.createElement('span', { className: "font-medium" }, project.level)),
+                        React.createElement('p', null, "Style: ", React.createElement('span', { className: "font-medium" }, project.style)),
+                        React.createElement('p', null, "Mode: ", React.createElement('span', { className: "font-medium" }, project.mode))
+                    )
+                ),
+                React.createElement('div', { className: "space-y-4" },
+                    React.createElement('h3', { className: "text-lg font-semibold text-gray-800" }, "Progression & Révision"),
+                    React.createElement('div', { className: `flex items-center text-md font-semibold ${projectStatusColor}` },
+                        React.createElement('span', { className: "mr-2" }, projectStatusIcon),
+                        React.createElement('span', null, projectStatusText)
+                    ),
+                    project.mode === 'Supervisé' && currentBlock && React.createElement('div', { className: "flex space-x-2" },
+                        React.createElement('button', { onClick: () => onSendSignal(project.project_id, { signal_type: 'VALIDATED', block_id: currentBlock.block_id }), className: "px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed", title: "Valider le contenu actuel", disabled: !canValidate }, "Valider"),
+                        React.createElement('button', { onClick: () => onSendSignal(project.project_id, { signal_type: 'REDO', block_id: currentBlock.block_id, feedback: { source: 'user', details: 'Nécessite des modifications (feedback détaillé à implémenter)' } }), className: "px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors duration-200 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed", title: "Demander des modifications", disabled: !canRedo }, "Refaire")
+                    ),
+                    canCompileAndExport && React.createElement('div', { className: "mt-4" },
+                        React.createElement('button', { onClick: () => onSendSignal(project.project_id, { signal_type: 'ALL_APPROVED' }), className: "w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 shadow-md", title: "Compiler et exporter le document final" }, "Compiler et Exporter")
+                    ),
+                    canDownload && React.createElement('div', { className: "mt-4" },
+                        React.createElement('button', { onClick: () => onDownloadExport(project.project_id, 'pdf'), className: "w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors duration-200 shadow-md flex items-center justify-center", title: "Télécharger le document PDF" },
+                            React.createElement('i', { className: "fas fa-download mr-2" }), " Télécharger PDF" // Font Awesome
+                        )
+                    ),
+                    React.createElement('div', { className: "mt-4" },
+                        React.createElement('h4', { className: "text-md font-semibold mb-2 text-gray-700" }, "Notifications"),
+                        React.createElement('ul', { className: "text-sm text-gray-600 space-y-1" },
+                            project.status === 'qc_failed' && React.createElement('li', { className: "flex items-center text-orange-600" }, React.createElement('i', { className: "fas fa-exclamation-triangle mr-2" }), " Bloc actuel: QC Échoué. Raffinement nécessaire."), // Font Awesome
+                            project.status === 'refinement_failed' && React.createElement('li', { className: "flex items-center text-red-600" }, React.createElement('i', { className: "fas fa-times-circle mr-2" }), " Bloc actuel: Raffinement Échoué. Intervention manuelle."), // Font Awesome
+                            project.current_step && project.mode === 'Supervisé' && React.createElement('li', { className: "flex items-center text-blue-600" }, React.createElement('i', { className: "fas fa-hourglass-half mr-2" }), ` Étape actuelle: ${project.current_step}`), // Font Awesome
+                            project.mode === 'Autonome' && project.status === 'in_progress' && React.createElement('li', { className: "flex items-center text-blue-600" }, React.createElement('i', { className: "fas fa-hourglass-half mr-2" }), " Génération autonome en cours..."), // Font Awesome
+                            project.mode === 'Autonome' && project.status === 'completed' && React.createElement('li', { className: "flex items-center text-green-600" }, React.createElement('i', { className: "fas fa-check-circle mr-2" }), " Plan autonome terminé. Document prêt pour compilation.") // Font Awesome
+                        )
+                    )
+                ),
+                React.createElement('div', { className: "flex-grow overflow-y-auto border-t pt-4 border-gray-200" },
+                    React.createElement(DocumentTree, { documentStructure: project.document_structure, contentBlocks: contentBlocks, onSelectNode: onSelectNode })
+                ),
+                qcReportToDisplay && React.createElement('div', { className: "border-t pt-4 border-gray-200" }, React.createElement(QcReportGraph, { qcReport: qcReportToDisplay }))
+            );
+        };
+
+        // DashboardPage.js
+        const DashboardPage = () => {
+            const navigate = useNavigate();
+            const queryClient = useQueryClient();
+            const [filterStatus, setFilterStatus] = React.useState('');
+            const [showModal, setShowModal] = React.useState(false);
+            const [modalConfig, setModalConfig] = React.useState({});
+
+            const { data: projects, isLoading, isError, error } = useQuery({ queryKey: ['projects', filterStatus], queryFn: () => apiService.getProjects(filterStatus) });
+            const deleteProjectMutation = useMutation({
+                mutationFn: (projectId) => apiService.deleteProject(projectId),
+                onSuccess: () => { queryClient.invalidateQueries(['projects']); setModalConfig({ message: 'Projet supprimé avec succès.', type: 'alert', onConfirm: () => setShowModal(false) }); setShowModal(true); },
+                onError: (err) => { console.error('Erreur lors de la suppression du projet:', err); setModalConfig({ message: `Échec de la suppression du projet: ${err.message || 'Erreur inconnue'}`, type: 'alert', onConfirm: () => setShowModal(false) }); setShowModal(true); },
+            });
+            const archiveProjectMutation = useMutation({
+                mutationFn: ({ projectId, status }) => apiService.updateProject(projectId, { status }),
+                onSuccess: () => { queryClient.invalidateQueries(['projects']); setModalConfig({ message: 'Statut du projet mis à jour avec succès.', type: 'alert', onConfirm: () => setShowModal(false) }); setShowModal(true); },
+                onError: (err) => { console.error('Erreur lors de la mise à jour du projet:', err); setModalConfig({ message: `Échec de la mise à jour du projet: ${err.message || 'Erreur inconnue'}`, type: 'alert', onConfirm: () => setShowModal(false) }); setShowModal(true); },
+            });
+
+            const handleCreateNewProject = () => { navigate('/create-project'); };
+            const handleOpenProject = (projectId) => { navigate(`/projects/${projectId}`); };
+            const handleDeleteProject = (projectId) => {
+                setModalConfig({ message: 'Êtes-vous sûr de vouloir supprimer ce projet ? Cette action est irréversible.', type: 'confirm', onConfirm: () => { deleteProjectMutation.mutate(projectId); setShowModal(false); }, onCancel: () => setShowModal(false) });
+                setShowModal(true);
+            };
+            const handleArchiveProject = (projectId) => {
+                setModalConfig({ message: 'Êtes-vous sûr de vouloir archiver ce projet ? Il ne sera plus modifiable directement.', type: 'confirm', onConfirm: () => { archiveProjectMutation.mutate({ projectId, status: 'archived' }); setShowModal(false); }, onCancel: () => setShowModal(false) });
+                setShowModal(true);
+            };
+
+            if (isLoading) return React.createElement('div', { className: "flex items-center justify-center min-h-screen bg-gray-100" }, React.createElement('p', { className: "text-gray-600 text-lg" }, "Chargement des projets..."));
+            if (isError) return React.createElement('div', { className: "flex items-center justify-center min-h-screen bg-red-50" }, React.createElement('p', { className: "text-red-700 text-lg" }, `Erreur lors du chargement des projets: ${error.message}`));
+
+            return React.createElement('div', { className: "min-h-screen bg-gray-100 p-8" },
+                React.createElement('div', { className: "max-w-7xl mx-auto bg-white rounded-xl shadow-lg p-8" },
+                    React.createElement('div', { className: "flex justify-between items-center mb-6" },
+                        React.createElement('h1', { className: "text-3xl font-bold text-gray-800" }, "Mes Projets de Rédaction"),
+                        React.createElement('button', { onClick: handleCreateNewProject, className: "flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-lg shadow-md hover:from-blue-600 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105" },
+                            React.createElement('i', { className: "fas fa-plus mr-2" }), " Nouveau Projet" // Font Awesome
+                        )
+                    ),
+                    React.createElement('div', { className: "mb-6" },
+                        React.createElement('label', { htmlFor: "statusFilter", className: "block text-sm font-medium text-gray-700 mb-2" }, "Filtrer par statut:"),
+                        React.createElement('select', { id: "statusFilter", className: "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm", value: filterStatus, onChange: (e) => setFilterStatus(e.target.value) },
+                            React.createElement('option', { value: "" }, "Tous les statuts"),
+                            React.createElement('option', { value: "draft" }, "Brouillon"),
+                            React.createElement('option', { value: "in_progress" }, "En cours"),
+                            React.createElement('option', { value: "completed" }, "Terminé"),
+                            React.createElement('option', { value: "archived" }, "Archivé"),
+                            React.createElement('option', { value: "error" }, "Erreur")
+                        )
+                    ),
+                    projects.length === 0 ? React.createElement('div', { className: "text-center py-10 text-gray-600" }, React.createElement('p', { className: "text-lg" }, "Vous n'avez pas encore de projets."), React.createElement('p', { className: "mt-2" }, "Cliquez sur \"Nouveau Projet\" pour commencer à rédiger !")) :
+                        React.createElement('div', { className: "overflow-x-auto rounded-lg shadow-md" },
+                            React.createElement('table', { className: "min-w-full divide-y divide-gray-200" },
+                                React.createElement('thead', { className: "bg-gray-50" },
+                                    React.createElement('tr', null,
+                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "Titre"),
+                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "Sujet"),
+                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "Niveau"),
+                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "Mode"),
+                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "Statut"),
+                                        React.createElement('th', { scope: "col", className: "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }, "Modifié le"),
+                                        React.createElement('th', { scope: "col", className: "relative px-6 py-3" }, React.createElement('span', { className: "sr-only" }, "Actions"))
+                                    )
+                                ),
+                                React.createElement('tbody', { className: "bg-white divide-y divide-gray-200" },
+                                    projects.map((project) => React.createElement('tr', { key: project.project_id, className: "hover:bg-gray-50 transition-colors duration-150" },
+                                        React.createElement('td', { className: "px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900" }, project.title),
+                                        React.createElement('td', { className: "px-6 py-4 whitespace-nowrap text-sm text-gray-700" }, project.subject),
+                                        React.createElement('td', { className: "px-6 py-4 whitespace-nowrap text-sm text-gray-700" }, project.level),
+                                        React.createElement('td', { className: "px-6 py-4 whitespace-nowrap text-sm text-gray-700" }, project.mode),
+                                        React.createElement('td', { className: "px-6 py-4 whitespace-nowrap text-sm text-gray-700" },
+                                            React.createElement('span', { className: `px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${project.status === 'completed' ? 'bg-green-100 text-green-800' : project.status === 'in_progress' ? 'bg-blue-100 text-blue-800' : project.status === 'draft' ? 'bg-gray-100 text-gray-800' : project.status === 'archived' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}` }, `${project.status} ${project.current_step ? `- ${project.current_step}` : ''}`)
+                                        ),
+                                        React.createElement('td', { className: "px-6 py-4 whitespace-nowrap text-sm text-gray-700" }, new Date(project.updated_at).toLocaleDateString()),
+                                        React.createElement('td', { className: "px-6 py-4 whitespace-nowrap text-right text-sm font-medium" },
+                                            React.createElement('div', { className: "flex space-x-2" },
+                                                React.createElement('button', { onClick: () => handleOpenProject(project.project_id), className: "text-indigo-600 hover:text-indigo-900 flex items-center p-2 rounded-md hover:bg-indigo-50 transition-colors", title: "Ouvrir le projet" },
+                                                    React.createElement('i', { className: "fas fa-folder-open mr-1" }), " Ouvrir" // Font Awesome
+                                                ),
+                                                project.status !== 'archived' && project.status !== 'completed' && React.createElement('button', { onClick: () => handleArchiveProject(project.project_id), className: "text-yellow-600 hover:text-yellow-900 flex items-center p-2 rounded-md hover:bg-yellow-50 transition-colors", title: "Archiver le projet", disabled: archiveProjectMutation.isPending },
+                                                    React.createElement('i', { className: "fas fa-archive mr-1" }), " Archiver" // Font Awesome
+                                                ),
+                                                React.createElement('button', { onClick: () => handleDeleteProject(project.project_id), className: "text-red-600 hover:text-red-900 flex items-center p-2 rounded-md hover:bg-red-50 transition-colors", title: "Supprimer le projet", disabled: deleteProjectMutation.isPending },
+                                                    React.createElement('i', { className: "fas fa-trash mr-1" }), " Supprimer" // Font Awesome
+                                                )
+                                            )
+                                        )
+                                    ))
+                                )
+                            )
+                        )
+                    ),
+                    showModal && React.createElement(ConfirmationModal, { message: modalConfig.message, onConfirm: modalConfig.onConfirm, onCancel: modalConfig.onCancel, type: modalConfig.type })
+                );
+            };
+
+        // ProjectEditorPage.js
+        const ProjectEditorPage = () => {
+            const { projectId } = useParams();
+            const queryClient = useQueryClient();
+            const [editorContent, setEditorContent] = React.useState('');
+            const [currentBlockId, setCurrentBlockId] = React.useState(null);
+            const editorRef = React.useRef(null);
+
+            const { data: project, isLoading, isError, error } = useQuery({
+                queryKey: ['project', projectId],
+                queryFn: () => apiService.getProject(projectId),
+                refetchInterval: 5000,
+                onSuccess: (data) => {
+                    if (!currentBlockId && data.content_blocks && data.content_blocks.length > 0) {
+                        const firstEditableBlock = data.content_blocks.find(
+                            (block) => block.status === 'in_progress' || block.status === 'pending_validation' || block.status === 'qc_failed' || block.status === 'refinement_failed' || block.status === 'draft'
+                        );
+                        if (firstEditableBlock) {
+                            setEditorContent(firstEditableBlock.content_latex || '');
+                            setCurrentBlockId(firstEditableBlock.block_id);
+                        } else {
+                            const firstValidatedBlock = data.content_blocks.find((block) => block.status === 'validated');
+                            if (firstValidatedBlock) {
+                                setEditorContent(firstValidatedBlock.content_latex || '');
+                                setCurrentBlockId(firstValidatedBlock.block_id);
+                            }
+                        }
+                    } else if (currentBlockId) {
+                        const updatedBlock = data.content_blocks.find((block) => block.block_id === currentBlockId);
+                        if (updatedBlock && updatedBlock.content_latex !== editorContent) {
+                            setEditorContent(updatedBlock.content_latex || '');
+                        }
+                    }
+                },
+            });
+
+            const saveBlockMutation = useMutation({
+                mutationFn: ({ blockId, contentLatex }) => apiService.updateContentBlock(blockId, { content_latex: contentLatex }),
+                onSuccess: () => { queryClient.invalidateQueries(['project', projectId]); },
+                onError: (err) => { console.error('Error saving block:', err); alert(`Failed to save block: ${err.message || 'Unknown error'}`); },
+            });
+            const sendSignalMutation = useMutation({
+                mutationFn: ({ projectId, signalType, blockId, feedback }) => apiService.sendWorkflowSignal(projectId, { signal_type: signalType, block_id: blockId, feedback }),
+                onSuccess: () => { queryClient.invalidateQueries(['project', projectId]); alert('Signal sent to workflow!'); },
+                onError: (err) => { console.error('Error sending signal:', err); alert(`Failed to send signal: ${err.message || 'Unknown error'}`); },
+            });
+            const downloadExportMutation = useMutation({
+                mutationFn: ({ projectId, format }) => apiService.downloadExportedDocument(projectId, format),
+                onSuccess: (data) => { if (data && data.download_url) { window.open(data.download_url, '_blank'); } else { alert('Download URL not available.'); } },
+                onError: (err) => { console.error('Error downloading export:', err); alert(`Failed to download: ${err.message || 'Unknown error'}`); },
+            });
+
+            const handleEditorContentChange = React.useCallback((newContent) => { setEditorContent(newContent.latex); }, [currentBlockId, saveBlockMutation]);
+            const handleSelectNodeInTree = React.useCallback((nodeId, nodeObject) => {
+                if (nodeObject.type === 'block') {
+                    const selectedBlock = project.content_blocks.find(b => b.block_id === nodeId);
+                    if (selectedBlock) {
+                        setEditorContent(selectedBlock.content_latex || '');
+                        setCurrentBlockId(selectedBlock.block_id);
+                    }
+                }
+            }, [project]);
+
+            const handleSaveContent = () => {
+                if (currentBlockId && editorContent) { saveBlockMutation.mutate({ blockId: currentBlockId, contentLatex: editorContent }); } else { alert('No block selected or empty content to save.'); }
+            };
+            const handleDownloadExport = (projectId, format) => { downloadExportMutation.mutate({ projectId, format }); };
+
+            if (isLoading) return React.createElement('div', { className: "flex items-center justify-center min-h-screen bg-gray-100" }, React.createElement('p', { className: "text-gray-600 text-lg" }, "Loading project..."));
+            if (isError) return React.createElement('div', { className: "flex items-center justify-center min-h-screen bg-red-50" }, React.createElement('p', { className: "text-red-700 text-lg" }, `Error loading project: ${error.message}`));
+            if (!project) return React.createElement('div', { className: "flex items-center justify-center min-h-screen bg-gray-100" }, React.createElement('p', { className: "text-gray-600 text-lg" }, "Project not found."));
+
+            const currentBlock = project.content_blocks.find(b => b.block_id === currentBlockId);
+
+            return React.createElement('div', { className: "min-h-screen bg-gray-100 p-8 flex" },
+                React.createElement('div', { className: "flex-1 bg-white rounded-xl shadow-lg p-8 mr-6 flex flex-col" },
+                    React.createElement('div', { className: "flex justify-between items-center mb-6" },
+                        React.createElement('h1', { className: "text-3xl font-bold text-gray-800" }, `Projet : ${project.title}`),
+                        React.createElement('div', { className: "flex space-x-3" },
+                            React.createElement('button', { onClick: handleSaveContent, className: "flex items-center px-4 py-2 bg-blue-500 text-white font-semibold rounded-md shadow-sm hover:bg-blue-600 transition-colors duration-200", disabled: saveBlockMutation.isPending },
+                                React.createElement('i', { className: "fas fa-save mr-2" }), " Sauvegarder" // Font Awesome
+                            ),
+                            project.status === 'completed_exported' && React.createElement('button', { onClick: () => handleDownloadExport(project.project_id, 'pdf'), className: "flex items-center px-4 py-2 bg-purple-600 text-white font-semibold rounded-md shadow-sm hover:bg-purple-700 transition-colors duration-200", disabled: downloadExportMutation.isPending },
+                                React.createElement('i', { className: "fas fa-download mr-2" }), " Télécharger PDF" // Font Awesome
+                            ),
+                            React.createElement('button', { onClick: () => alert('Project Settings feature to be implemented'), className: "px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-md shadow-sm hover:bg-gray-300 transition-colors duration-200" }, "Paramètres")
+                        )
+                    ),
+                    React.createElement('div', { className: "flex-1" },
+                        React.createElement('h2', { className: "text-xl font-semibold text-gray-700 mb-4" }, "Éditeur de contenu"),
+                        React.createElement(RichTextEditor, { ref: editorRef, content: editorContent, onContentChange: handleEditorContentChange, editable: project.mode === 'Supervisé' || (project.mode === 'Autonome' && project.status !== 'completed' && project.status !== 'completed_exported') })
+                    )
+                ),
+                React.createElement('div', { className: "w-96 bg-white rounded-xl shadow-lg p-6 flex flex-col" },
+                    React.createElement(WorkflowPanel, { project: project, contentBlocks: project.content_blocks, onSendSignal: sendSignalMutation.mutate, onDownloadExport: handleDownloadExport, currentBlock: currentBlock, onSelectNode: handleSelectNodeInTree })
+                )
+            );
+        };
+
+        // LoginPage.js
+        const LoginPage = () => {
+            const [username, setUsername] = React.useState('');
+            const [password, setPassword] = React.useState('');
+            const [isLoading, setIsLoading] = React.useState(false);
+            const [error, setError] = React.useState('');
+            const navigate = useNavigate();
+
+            const handleSubmit = async (e) => {
+                e.preventDefault(); setError(''); setIsLoading(true);
+                try {
+                    const response = await apiService.loginUser(username, password);
+                    console.log('Connexion réussie:', response); navigate('/');
+                } catch (err) {
+                    console.error('Erreur de connexion:', err); setError(err.message || 'Échec de la connexion. Veuillez vérifier vos identifiants.');
+                } finally { setIsLoading(false); }
+            };
+
+            return React.createElement('div', { className: "min-h-screen flex items-center justify-center bg-gray-100 p-4" },
+                React.createElement('div', { className: "bg-white rounded-xl shadow-lg p-8 w-full max-w-md" },
+                    React.createElement('h1', { className: "text-3xl font-bold text-center text-gray-800 mb-6" }, "Connexion"),
+                    error && React.createElement('div', { className: "bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md relative mb-4", role: "alert" }, React.createElement('span', { className: "block sm:inline" }, error)),
+                    React.createElement('form', { onSubmit: handleSubmit, className: "space-y-6" },
+                        React.createElement('div', null,
+                            React.createElement('label', { htmlFor: "username", className: "block text-sm font-medium text-gray-700" }, "Nom d'utilisateur (Email)"),
+                            React.createElement('input', { type: "email", id: "username", name: "username", value: username, onChange: (e) => setUsername(e.target.value), required: true, className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm", placeholder: "votre.email@exemple.com" })
+                        ),
+                        React.createElement('div', null,
+                            React.createElement('label', { htmlFor: "password", className: "block text-sm font-medium text-gray-700" }, "Mot de passe"),
+                            React.createElement('input', { type: "password", id: "password", name: "password", value: password, onChange: (e) => setPassword(e.target.value), required: true, className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm", placeholder: "********" })
+                        ),
+                        React.createElement('div', null,
+                            React.createElement('button', { type: "submit", disabled: isLoading, className: "w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200" }, isLoading ? 'Connexion en cours...' : 'Se connecter')
+                        )
+                    ),
+                    React.createElement('p', { className: "mt-6 text-center text-sm text-gray-600" }, "Pas encore de compte ?", ' ', React.createElement('button', { onClick: () => navigate('/register'), className: "font-medium text-indigo-600 hover:text-indigo-500" }, "S'enregistrer"))
+                )
+            );
+        };
+
+        // RegisterPage.js
+        const RegisterPage = () => {
+            const [username, setUsername] = React.useState('');
+            const [password, setPassword] = React.useState('');
+            const [confirmPassword, setConfirmPassword] = React.useState('');
+            const [isLoading, setIsLoading] = React.useState(false);
+            const [error, setError] = React.useState('');
+            const [successMessage, setSuccessMessage] = React.useState('');
+            const navigate = useNavigate();
+
+            const handleSubmit = async (e) => {
+                e.preventDefault(); setError(''); setSuccessMessage(''); setIsLoading(true);
+                if (password !== confirmPassword) { setError('Les mots de passe ne correspondent pas.'); setIsLoading(false); return; }
+                try {
+                    await apiService.registerUser({ username, password });
+                    setSuccessMessage('Enregistrement réussi ! Vous pouvez maintenant vous connecter.');
+                    setTimeout(() => { navigate('/login'); }, 2000);
+                } catch (err) {
+                    console.error('Erreur d\'enregistrement:', err); setError(err.message || 'Échec de l\'enregistrement. Veuillez réessayer.');
+                } finally { setIsLoading(false); }
+            };
+
+            return React.createElement('div', { className: "min-h-screen flex items-center justify-center bg-gray-100 p-4" },
+                React.createElement('div', { className: "bg-white rounded-xl shadow-lg p-8 w-full max-w-md" },
+                    React.createElement('h1', { className: "text-3xl font-bold text-center text-gray-800 mb-6" }, "S'enregistrer"),
+                    error && React.createElement('div', { className: "bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md relative mb-4", role: "alert" }, React.createElement('span', { className: "block sm:inline" }, error)),
+                    successMessage && React.createElement('div', { className: "bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md relative mb-4", role: "alert" }, React.createElement('span', { className: "block sm:inline" }, successMessage)),
+                    React.createElement('form', { onSubmit: handleSubmit, className: "space-y-6" },
+                        React.createElement('div', null,
+                            React.createElement('label', { htmlFor: "username", className: "block text-sm font-medium text-gray-700" }, "Nom d'utilisateur (Email)"),
+                            React.createElement('input', { type: "email", id: "username", name: "username", value: username, onChange: (e) => setUsername(e.target.value), required: true, className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm", placeholder: "votre.email@exemple.com" })
+                        ),
+                        React.createElement('div', null,
+                            React.createElement('label', { htmlFor: "password", className: "block text-sm font-medium text-gray-700" }, "Mot de passe"),
+                            React.createElement('input', { type: "password", id: "password", name: "password", value: password, onChange: (e) => setPassword(e.target.value), required: true, minLength: "8", className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm", placeholder: "********" })
+                        ),
+                        React.createElement('div', null,
+                            React.createElement('label', { htmlFor: "confirmPassword", className: "block text-sm font-medium text-gray-700" }, "Confirmer le mot de passe"),
+                            React.createElement('input', { type: "password", id: "confirmPassword", name: "confirmPassword", value: confirmPassword, onChange: (e) => setConfirmPassword(e.target.value), required: true, minLength: "8", className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm", placeholder: "********" })
+                        ),
+                        React.createElement('div', null,
+                            React.createElement('button', { type: "submit", disabled: isLoading, className: "w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200" }, isLoading ? 'Enregistrement en cours...' : 'S\'enregistrer')
+                        )
+                    ),
+                    React.createElement('p', { className: "mt-6 text-center text-sm text-gray-600" }, "Déjà un compte ?", ' ', React.createElement('button', { onClick: () => navigate('/login'), className: "font-medium text-indigo-600 hover:text-indigo-500" }, "Se connecter"))
+                )
+            );
+        };
+
+        // CreateProjectPage.js
+        const CreateProjectPage = () => {
+            const [title, setTitle] = React.useState('');
+            const [subject, setSubject] = React.useState('');
+            const [level, setLevel] = React.useState('L1');
+            const [style, setStyle] = React.useState('Hybride');
+            const [mode, setMode] = React.useState('Supervisé');
+            const [error, setError] = React.useState('');
+            const navigate = useNavigate();
+            const queryClient = useQueryClient();
+
+            const createProjectMutation = useMutation({
+                mutationFn: (newProjectData) => apiService.createProject(newProjectData),
+                onSuccess: (data) => {
+                    queryClient.invalidateQueries(['projects']);
+                    alert('Projet créé avec succès !'); // Replace with custom modal later
+                    navigate(`/projects/${data.project_id}`);
+                },
+                onError: (err) => {
+                    console.error('Error creating project:', err);
+                    setError(err.message || 'Failed to create project. Please try again.');
+                },
+            });
+
+            const handleSubmit = (e) => {
+                e.preventDefault(); setError(''); createProjectMutation.mutate({ title, subject, level, style, mode });
+            };
+
+            return React.createElement('div', { className: "min-h-screen flex items-center justify-center bg-gray-100 p-4" },
+                React.createElement('div', { className: "bg-white rounded-xl shadow-lg p-8 w-full max-w-md" },
+                    React.createElement('div', { className: "flex justify-between items-center mb-6" },
+                        React.createElement('button', { onClick: () => navigate('/'), className: "text-gray-600 hover:text-gray-800 flex items-center" },
+                            React.createElement('i', { className: "fas fa-arrow-left mr-2" }), " Retour au Tableau de Bord" // Font Awesome
+                        ),
+                        React.createElement('h1', { className: "text-3xl font-bold text-gray-800" }, "Nouveau Projet")
+                    ),
+                    error && React.createElement('div', { className: "bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md relative mb-4", role: "alert" }, React.createElement('span', { className: "block sm:inline" }, error)),
+                    React.createElement('form', { onSubmit: handleSubmit, className: "space-y-6" },
+                        React.createElement('div', null,
+                            React.createElement('label', { htmlFor: "title", className: "block text-sm font-medium text-gray-700" }, "Titre du Projet"),
+                            React.createElement('input', { type: "text", id: "title", name: "title", value: title, onChange: (e) => setTitle(e.target.value), required: true, className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm", placeholder: "Ex: Introduction à l'Algèbre Linéaire" })
+                        ),
+                        React.createElement('div', null,
+                            React.createElement('label', { htmlFor: "subject", className: "block text-sm font-medium text-gray-700" }, "Sujet Mathématique"),
+                            React.createElement('input', { type: "text", id: "subject", name: "subject", value: subject, onChange: (e) => setSubject(e.target.value), required: true, className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm", placeholder: "Ex: Analyse, Algèbre, Géométrie" })
+                        ),
+                        React.createElement('div', null,
+                            React.createElement('label', { htmlFor: "level", className: "block text-sm font-medium text-gray-700" }, "Niveau Pédagogique"),
+                            React.createElement('select', { id: "level", name: "level", value: level, onChange: (e) => setLevel(e.target.value), required: true, className: "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm" },
+                                React.createElement('option', { value: "L1" }, "L1"), React.createElement('option', { value: "L2" }, "L2"), React.createElement('option', { value: "M1" }, "M1"), React.createElement('option', { value: "M2" }, "M2"), React.createElement('option', { value: "Lycée" }, "Lycée")
+                            )
+                        ),
+                        React.createElement('div', null,
+                            React.createElement('label', { htmlFor: "style", className: "block text-sm font-medium text-gray-700" }, "Style de Rédaction"),
+                            React.createElement('select', { id: "style", name: "style", value: style, onChange: (e) => setStyle(e.target.value), required: true, className: "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm" },
+                                React.createElement('option', { value: "Bourbaki" }, "Bourbaki (Formel, Rigoureux)"), React.createElement('option', { value: "Feynman" }, "Feynman (Intuitif, Pédagogique)"), React.createElement('option', { value: "Hybride" }, "Hybride (Équilibré)")
+                            )
+                        ),
+                        React.createElement('div', null,
+                            React.createElement('label', { htmlFor: "mode", className: "block text-sm font-medium text-gray-700" }, "Mode de Fonctionnement"),
+                            React.createElement('select', { id: "mode", name: "mode", value: mode, onChange: (e) => setMode(e.target.value), required: true, className: "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm" },
+                                React.createElement('option', { value: "Supervisé" }, "Supervisé (Validation humaine à chaque étape)"), React.createElement('option', { value: "Autonome" }, "Autonome (Génération continue, points de contrôle)")
+                            )
+                        ),
+                        React.createElement('div', null,
+                            React.createElement('button', { type: "submit", disabled: createProjectMutation.isPending, className: "w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200" }, createProjectMutation.isPending ? 'Création en cours...' : 'Créer le Projet')
+                        )
+                    )
+                )
+            );
+        };
+
+        // SettingsPage.js
+        const SettingsPage = () => {
+            const navigate = useNavigate();
+            const queryClient = useQueryClient();
+            const [username, setUsername] = React.useState('');
+            const [currentPassword, setCurrentPassword] = React.useState('');
+            const [newPassword, setNewPassword] = React.useState('');
+            const [confirmNewPassword, setConfirmNewPassword] = React.useState('');
+            const [error, setError] = React.useState('');
+            const [successMessage, setSuccessMessage] = React.useState('');
+
+            const { data: userSettings, isLoading: isSettingsLoading, isError: isSettingsError, error: settingsError } = useQuery({
+                queryKey: ['userSettings'],
+                queryFn: async () => {
+                    return { username: "utilisateur@example.com", default_level: "L2", default_style: "Hybride", notifications_enabled: true };
+                },
+                onSuccess: (data) => { setUsername(data.username); }
+            });
+
+            const updateSettingsMutation = useMutation({
+                mutationFn: async (updatedData) => { console.log("Mise à jour des paramètres simulée:", updatedData); return updatedData; },
+                onSuccess: () => { queryClient.invalidateQueries(['userSettings']); setSuccessMessage('Paramètres mis à jour avec succès !'); setError(''); setCurrentPassword(''); setNewPassword(''); setConfirmNewPassword(''); },
+                onError: (err) => { console.error('Erreur lors de la mise à jour des paramètres:', err); setError(err.message || 'Échec de la mise à jour des paramètres.'); setSuccessMessage(''); },
+            });
+
+            const handleUpdateProfile = (e) => { e.preventDefault(); setError(''); setSuccessMessage(''); updateSettingsMutation.mutate({ username }); };
+            const handleChangePassword = (e) => {
+                e.preventDefault(); setError(''); setSuccessMessage('');
+                if (newPassword !== confirmNewPassword) { setError('Le nouveau mot de passe et sa confirmation ne correspondent pas.'); return; }
+                if (newPassword.length < 8) { setError('Le nouveau mot de passe doit contenir au moins 8 caractères.'); return; }
+                updateSettingsMutation.mutate({ current_password: currentPassword, new_password: newPassword });
+            };
+
+            if (isSettingsLoading) return React.createElement('div', { className: "flex items-center justify-center min-h-screen bg-gray-100" }, React.createElement('p', { className: "text-gray-600 text-lg" }, "Chargement des paramètres..."));
+            if (isSettingsError) return React.createElement('div', { className: "flex items-center justify-center min-h-screen bg-red-50" }, React.createElement('p', { className: "text-red-700 text-lg" }, `Erreur lors du chargement des paramètres: ${settingsError.message}`));
+
+            return React.createElement('div', { className: "min-h-screen bg-gray-100 p-8" },
+                React.createElement('div', { className: "max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8" },
+                    React.createElement('div', { className: "flex justify-between items-center mb-6" },
+                        React.createElement('button', { onClick: () => navigate('/'), className: "text-gray-600 hover:text-gray-800 flex items-center" }, React.createElement('i', { className: "fas fa-arrow-left mr-2" }), " Retour au Tableau de Bord"), // Font Awesome
+                        React.createElement('h1', { className: "text-3xl font-bold text-gray-800" }, "Paramètres")
+                    ),
+                    error && React.createElement('div', { className: "bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md relative mb-4", role: "alert" }, React.createElement('span', { className: "block sm:inline" }, error)),
+                    successMessage && React.createElement('div', { className: "bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md relative mb-4", role: "alert" }, React.createElement('span', { className: "block sm:inline" }, successMessage)),
+                    React.createElement('div', { className: "mb-8 border-b pb-6" },
+                        React.createElement('h2', { className: "text-2xl font-semibold text-gray-800 mb-4" }, "Profil Utilisateur"),
+                        React.createElement('form', { onSubmit: handleUpdateProfile, className: "space-y-4" },
+                            React.createElement('div', null,
+                                React.createElement('label', { htmlFor: "username", className: "block text-sm font-medium text-gray-700" }, "Nom d'utilisateur (Email)"),
+                                React.createElement('input', { type: "email", id: "username", name: "username", value: username, onChange: (e) => setUsername(e.target.value), required: true, className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm", placeholder: "votre.email@exemple.com", disabled: updateSettingsMutation.isPending })
+                            ),
+                            React.createElement('div', null,
+                                React.createElement('button', { type: "submit", disabled: updateSettingsMutation.isPending, className: "px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center" }, React.createElement('i', { className: "fas fa-save mr-2" }), updateSettingsMutation.isPending ? 'Sauvegarde...' : 'Sauvegarder le Profil') // Font Awesome
+                            )
+                        )
+                    ),
+                    React.createElement('div', { className: "mb-8 border-b pb-6" },
+                        React.createElement('h2', { className: "text-2xl font-semibold text-gray-800 mb-4" }, "Changer le Mot de Passe"),
+                        React.createElement('form', { onSubmit: handleChangePassword, className: "space-y-4" },
+                            React.createElement('div', null,
+                                React.createElement('label', { htmlFor: "currentPassword", className: "block text-sm font-medium text-gray-700" }, "Mot de passe actuel"),
+                                React.createElement('input', { type: "password", id: "currentPassword", name: "currentPassword", value: currentPassword, onChange: (e) => setCurrentPassword(e.target.value), required: true, className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm", placeholder: "********", disabled: updateSettingsMutation.isPending })
+                            ),
+                            React.createElement('div', null,
+                                React.createElement('label', { htmlFor: "newPassword", className: "block text-sm font-medium text-gray-700" }, "Nouveau mot de passe"),
+                                React.createElement('input', { type: "password", id: "newPassword", name: "newPassword", value: newPassword, onChange: (e) => setNewPassword(e.target.value), required: true, minLength: "8", className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm", placeholder: "********", disabled: updateSettingsMutation.isPending })
+                            ),
+                            React.createElement('div', null,
+                                React.createElement('label', { htmlFor: "confirmNewPassword", className: "block text-sm font-medium text-gray-700" }, "Confirmer le nouveau mot de passe"),
+                                React.createElement('input', { type: "password", id: "confirmNewPassword", name: "confirmNewPassword", value: confirmNewPassword, onChange: (e) => setConfirmNewPassword(e.target.value), required: true, minLength: "8", className: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm", placeholder: "********", disabled: updateSettingsMutation.isPending })
+                            ),
+                            React.createElement('div', null,
+                                React.createElement('button', { type: "submit", disabled: updateSettingsMutation.isPending, className: "px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center" }, React.createElement('i', { className: "fas fa-save mr-2" }), updateSettingsMutation.isPending ? 'Sauvegarde...' : 'Changer le Mot de Passe') // Font Awesome
+                            )
+                        )
+                    ),
+                    React.createElement('div', null,
+                        React.createElement('h2', { className: "text-2xl font-semibold text-gray-800 mb-4" }, "Préférences d'Application"),
+                        React.createElement('div', { className: "space-y-4" },
+                            React.createElement('div', null,
+                                React.createElement('label', { htmlFor: "defaultLevel", className: "block text-sm font-medium text-gray-700" }, "Niveau Pédagogique par Défaut"),
+                                React.createElement('select', { id: "defaultLevel", name: "defaultLevel", value: userSettings?.default_level || '', onChange: (e) => updateSettingsMutation.mutate({ default_level: e.target.value }), className: "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm", disabled: updateSettingsMutation.isPending },
+                                    React.createElement('option', { value: "L1" }, "L1"), React.createElement('option', { value: "L2" }, "L2"), React.createElement('option', { value: "M1" }, "M1"), React.createElement('option', { value: "M2" }, "M2"), React.createElement('option', { value: "Lycée" }, "Lycée")
+                                )
+                            ),
+                            React.createElement('div', null,
+                                React.createElement('label', { htmlFor: "defaultStyle", className: "block text-sm font-medium text-gray-700" }, "Style de Rédaction par Défaut"),
+                                React.createElement('select', { id: "defaultStyle", name: "defaultStyle", value: userSettings?.default_style || '', onChange: (e) => updateSettingsMutation.mutate({ default_style: e.target.value }), className: "mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm", disabled: updateSettingsMutation.isPending },
+                                    React.createElement('option', { value: "Bourbaki" }, "Bourbaki (Formel, Rigoureux)"), React.createElement('option', { value: "Feynman" }, "Feynman (Intuitif, Pédagogique)"), React.createElement('option', { value: "Hybride" }, "Hybride (Équilibré)")
+                                )
+                            ),
+                            React.createElement('div', { className: "flex items-center" },
+                                React.createElement('input', { id: "notificationsEnabled", name: "notificationsEnabled", type: "checkbox", checked: userSettings?.notifications_enabled || false, onChange: (e) => updateSettingsMutation.mutate({ notifications_enabled: e.target.checked }), className: "h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded", disabled: updateSettingsMutation.isPending }),
+                                React.createElement('label', { htmlFor: "notificationsEnabled", className: "ml-2 block text-sm font-medium text-gray-700" }, "Activer les notifications")
+                            )
+                        )
+                    )
+                )
+            );
+        };
+
+        // NotFoundPage.js
+        const NotFoundPage = () => {
+            return React.createElement('div', { className: "min-h-screen flex items-center justify-center bg-gray-100 p-4" },
+                React.createElement('div', { className: "bg-white rounded-xl shadow-lg p-8 text-center max-w-md w-full" },
+                    React.createElement('i', { className: "fas fa-exclamation-circle text-red-500 text-6xl mx-auto mb-6" }), // Font Awesome
+                    React.createElement('h1', { className: "text-4xl font-bold text-gray-800 mb-4" }, "404 - Page Non Trouvée"),
+                    React.createElement('p', { className: "text-gray-700 mb-6" }, "Désolé, la page que vous recherchez n'existe pas ou a été déplacée."),
+                    React.createElement(Link, { to: "/", className: "inline-flex items-center px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg shadow-md hover:bg-indigo-700 transition-colors duration-200" }, "Retour au Tableau de Bord")
+                )
+            );
+        };
+
+        // App.js
+        const App = () => {
+            const queryClient = new QueryClient();
+            const [isLoggedIn, setIsLoggedIn] = React.useState(false); // Mock login state
+
+            React.useEffect(() => {
+                // Simulate checking login status on app load
+                const token = localStorage.getItem('accessToken');
+                if (token) {
+                    setIsLoggedIn(true);
+                }
+            }, []);
+
+            const handleLogout = () => {
+                localStorage.removeItem('accessToken');
+                setIsLoggedIn(false);
+                window.location.href = '/login'; // Redirect to login after logout
+            };
+
+            return React.createElement(Provider, { store: {
+                reducer: {
+                    placeholder: (state = {}, action) => state,
+                },
+                devTools: true, // Enable Redux DevTools
+                middleware: (getDefaultMiddleware) => getDefaultMiddleware(),
+            } },
+                React.createElement(QueryClientProvider, { client: queryClient },
+                    React.createElement('div', { className: "min-h-screen flex flex-col bg-gray-100" },
+                        React.createElement('header', { className: "bg-white shadow-sm p-4 flex justify-between items-center" },
+                            React.createElement('h1', { className: "text-2xl font-bold text-gray-800" }, "Auto-Maths IA"),
+                            React.createElement('nav', null,
+                                isLoggedIn && React.createElement(Link, { to: "/", className: "text-blue-600 hover:text-blue-800 mr-4" }, "Tableau de Bord"),
+                                isLoggedIn && React.createElement(Link, { to: "/settings", className: "text-blue-600 hover:text-blue-800 mr-4" }, "Paramètres"),
+                                isLoggedIn ?
+                                    React.createElement('button', { onClick: handleLogout, className: "text-red-500 hover:text-red-700 ml-4" }, "Déconnexion") :
+                                    React.createElement(Link, { to: "/login", className: "text-blue-600 hover:text-blue-800 ml-4" }, "Connexion")
+                            )
+                        ),
+                        React.createElement('main', { className: "flex-1" },
+                            React.createElement(BrowserRouter, null,
+                                React.createElement(Routes, null,
+                                    React.createElement(Route, { path: "/login", element: React.createElement(LoginPage, null) }),
+                                    React.createElement(Route, { path: "/register", element: React.createElement(RegisterPage, null) }),
+                                    React.createElement(Route, { path: "/create-project", element: React.createElement(CreateProjectPage, null) }),
+                                    React.createElement(Route, { path: "/settings", element: React.createElement(SettingsPage, null) }),
+                                    React.createElement(Route, { path: "/", element: isLoggedIn ? React.createElement(DashboardPage, null) : React.createElement(LoginPage, null) }),
+                                    React.createElement(Route, { path: "/projects/:projectId", element: isLoggedIn ? React.createElement(ProjectEditorPage, null) : React.createElement(LoginPage, null) }),
+                                    React.createElement(Route, { path: "*", element: React.createElement(NotFoundPage, null) })
+                                )
+                            )
+                        ),
+                        React.createElement('footer', { className: "bg-gray-800 text-white text-center p-4 mt-8" }, React.createElement('p', null, "\u00A9 ", new Date().getFullYear(), " Auto-Maths IA. Tous droits réservés."))
+                    )
+                )
+            );
+        };
+
+        // Render the App
+        const rootElement = document.getElementById('root');
+        const root = ReactDOM.createRoot(rootElement);
+        root.render(React.createElement(React.StrictMode, null, React.createElement(App, null)));
+    </script>
+</body>
+</html>

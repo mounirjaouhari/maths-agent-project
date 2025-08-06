@@ -1,0 +1,401 @@
+openapi: 3.0.0
+info:
+  title: Generation Service Internal API
+  description: API interne pour la génération et le raffinement de contenu mathématique et pédagogique via des modèles de langage avancés (LLMs).
+  version: 1.0.0
+servers:
+  - url: http://generation-service-service:80 # URL interne du service Kubernetes
+    description: Environnement Kubernetes interne
+paths:
+  /internal/generate/definition:
+    post:
+      summary: Générer une définition pour un concept mathématique
+      operationId: generateDefinition
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateDefinitionRequest'
+      responses:
+        '200':
+          description: Définition générée avec succès en LaTeX
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content_latex:
+                    type: string
+                    description: La définition générée en format LaTeX
+        '400':
+          description: Paramètres d'entrée invalides
+        '500':
+          description: Erreur interne du service ou échec de l'appel LLM
+  /internal/generate/intuition:
+    post:
+      summary: Générer une explication intuitive ou une analogie pour un concept
+      operationId: generateIntuition
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateIntuitionRequest'
+      responses:
+        '200':
+          description: Intuition/analogie générée avec succès en LaTeX
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content_latex:
+                    type: string
+                    description: L'explication intuitive générée en format LaTeX
+        '400':
+          description: Paramètres d'entrée invalides
+        '500':
+          description: Erreur interne du service ou échec de l'appel LLM
+  /internal/generate/proof-skeleton:
+    post:
+      summary: Générer un squelette ou une ébauche de preuve pour un théorème
+      operationId: generateProofSkeleton
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateProofSkeletonRequest'
+      responses:
+        '200':
+          description: Squelette de preuve généré avec succès en LaTeX
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content_latex:
+                    type: string
+                    description: Le squelette de preuve généré en format LaTeX
+        '400':
+          description: Paramètres d'entrée invalides
+        '500':
+          description: Erreur interne du service ou échec de l'appel LLM
+  /internal/generate/exercise:
+    post:
+      summary: Générer un ou plusieurs exercices
+      operationId: generateExercise
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateExerciseRequest'
+      responses:
+        '200':
+          description: Exercices générés avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exercises:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GeneratedExercise'
+        '400':
+          description: Paramètres d'entrée invalides
+        '500':
+          description: Erreur interne du service ou échec de l'appel LLM
+  /internal/generate/text-block:
+    post:
+      summary: Générer un bloc de texte général (introduction, transition, conclusion)
+      operationId: generateTextBlock
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateTextBlockRequest'
+      responses:
+        '200':
+          description: Bloc de texte généré avec succès en LaTeX
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content_latex:
+                    type: string
+                    description: Le bloc de texte généré en format LaTeX
+        '400':
+          description: Paramètres d'entrée invalides
+        '500':
+          description: Erreur interne du service ou échec de l'appel LLM
+  /internal/refine/content:
+    post:
+      summary: Raffiner un contenu existant basé sur un feedback
+      operationId: refineContent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefineContentRequest'
+      responses:
+        '200':
+          description: Contenu raffiné avec succès en LaTeX
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content_latex:
+                    type: string
+                    description: Le contenu raffiné en format LaTeX
+        '400':
+          description: Paramètres d'entrée invalides
+        '500':
+          description: Erreur interne du service ou échec du raffinement LLM
+components:
+  schemas:
+    GenerateDefinitionRequest:
+      type: object
+      required:
+        - concept_id
+        - type
+        - level
+      properties:
+        concept_id:
+          type: string
+          format: uuid
+          description: ID du concept mathématique
+        type:
+          type: string
+          enum: [formelle, intuitive, visuelle]
+          description: Type de définition souhaité
+        level:
+          type: string
+          description: Niveau pédagogique cible (ex: L1, L2, M1)
+        context:
+          type: object
+          nullable: true
+          description: Contexte supplémentaire pour la génération (ex: texte précédent)
+          additionalProperties: true
+    GenerateIntuitionRequest:
+      type: object
+      required:
+        - concept_id
+        - style
+        - level
+      properties:
+        concept_id:
+          type: string
+          format: uuid
+          description: ID du concept mathématique
+        style:
+          type: string
+          enum: [Feynman, Hybride]
+          description: Style rédactionnel souhaité
+        level:
+          type: string
+          description: Niveau pédagogique cible
+        context:
+          type: object
+          nullable: true
+          description: Contexte supplémentaire pour la génération
+          additionalProperties: true
+    GenerateProofSkeletonRequest:
+      type: object
+      required:
+        - theorem_id
+        - level
+        - style
+      properties:
+        theorem_id:
+          type: string
+          format: uuid
+          description: ID du théorème
+        level:
+          type: string
+          description: Niveau de détail/rigueur souhaité pour le squelette
+        style:
+          type: string
+          enum: [Bourbaki, Feynman, Hybride]
+          description: Style de la preuve
+        context:
+          type: object
+          nullable: true
+          description: Contexte supplémentaire pour la génération
+          additionalProperties: true
+    GenerateExerciseRequest:
+      type: object
+      required:
+        - concept_id
+        - level
+        - exercise_type
+        - difficulty
+      properties:
+        concept_id:
+          type: string
+          format: uuid
+          description: Concept principal de l'exercice
+        level:
+          type: string
+          description: Niveau cible
+        exercise_type:
+          type: string
+          enum: [calculation, proof, application]
+          description: Type d'exercice
+        difficulty:
+          type: string
+          enum: [easy, medium, hard]
+          description: Niveau de difficulté
+        num_exercises:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Nombre d'exercices à générer
+        context:
+          type: object
+          nullable: true
+          description: Contexte supplémentaire pour la génération
+          additionalProperties: true
+    GeneratedExercise:
+      type: object
+      properties:
+        prompt_latex:
+          type: string
+          description: L'énoncé de l'exercice en LaTeX
+        solution_latex:
+          type: string
+          nullable: true
+          description: La solution de l'exercice en LaTeX
+    GenerateTextBlockRequest:
+      type: object
+      required:
+        - block_type
+        - style
+        - level
+      properties:
+        block_type:
+          type: string
+          enum: [introduction, conclusion, transition, example_text, historical_note, application_text]
+          description: Type de bloc de texte général
+        concept_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID du concept principal si pertinent
+        section_context:
+          type: object
+          nullable: true
+          description: Informations sur la section en cours
+          additionalProperties: true
+        style:
+          type: string
+          enum: [Bourbaki, Feynman, Hybride]
+          description: Style rédactionnel
+        level:
+          type: string
+          description: Niveau pédagogique cible
+        context:
+          type: object
+          nullable: true
+          description: Contexte général pour la génération
+          additionalProperties: true
+    RefineContentRequest:
+      type: object
+      required:
+        - content_latex
+        - feedback
+        - block_type
+        - level
+        - style
+      properties:
+        content_latex:
+          type: string
+          description: Le contenu original à raffiner en LaTeX
+        feedback:
+          type: object
+          description: Dictionnaire décrivant le feedback (utilisateur ou QC)
+          properties:
+            source:
+              type: string
+              enum: [user, qc]
+              description: Source du feedback
+            details:
+              type: string
+              description: Texte du commentaire utilisateur ou résumé du problème QC
+            location:
+              type: object
+              nullable: true
+              description: Informations de localisation du feedback (ex: ligne, caractère)
+              additionalProperties: true
+            qc_report:
+              $ref: '#/components/schemas/QCReport'
+              nullable: true
+              description: Rapport QC complet si la source est 'qc'
+            critical_errors_only:
+              type: boolean
+              default: false
+              description: Pour le feedback QC, ne considérer que les erreurs critiques
+          required:
+            - source
+        block_type:
+          type: string
+          enum: [definition, intuition, proof_skeleton, exercise, text, image]
+          description: Type du bloc de contenu
+        level:
+          type: string
+          description: Niveau pédagogique cible
+        style:
+          type: string
+          description: Style rédactionnel
+        context:
+          type: object
+          nullable: true
+          description: Contexte supplémentaire pour le raffinement
+          additionalProperties: true
+    QCReport:
+      type: object
+      properties:
+        overall_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+        status:
+          type: string
+          enum: [passed, failed, partial_success]
+        problems:
+          type: array
+          items:
+            $ref: '#/components/schemas/QCProblem'
+        details:
+          type: object
+          description: Détails bruts des analyses par sous-module (math, pedago, coherence)
+          additionalProperties: true
+    QCProblem:
+      type: object
+      required:
+        - type
+        - severity
+        - description
+      properties:
+        type:
+          type: string
+          enum: [math_error, clarity_issue, style_mismatch, coherence_issue, formatting_error, pedagogic_pitfall, other]
+        severity:
+          type: string
+          enum: [critical, major, minor, warning]
+        description:
+          type: string
+        location:
+          type: object
+          description: Localisation précise du problème dans le contenu (ex: ligne, caractère, formule_id)
+          nullable: true
+        suggested_fix:
+          type: string
+          nullable: true

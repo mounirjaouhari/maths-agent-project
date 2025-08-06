@@ -1,0 +1,153 @@
+# Schéma de la Base de Connaissances (KB) pour Neo4j (Approche Graphe)
+
+Ce document décrit la modélisation conceptuelle de la Base de Connaissances mathématique et pédagogique si elle était implémentée dans une base de données graphe comme Neo4j. Il détaille les Labels des Nœuds, les Types de Relations et leurs Propriétés.
+
+---
+
+## 1. Labels des Nœuds (Entités)
+
+Chaque nœud représente une entité distincte dans la Base de Connaissances.
+
+### 1.1. `Concept`
+Représente un concept mathématique fondamental (ex: "Espace Vectoriel", "Dérivée").
+- **Propriétés:**
+    - `id` (UUID): Identifiant unique du concept.
+    - `name` (String): Nom du concept (ex: "Espace Vectoriel").
+    - `slug` (String): Identifiant unique et lisible par machine (ex: "espace_vectoriel").
+    - `domain` (String): Domaine mathématique principal (ex: "Algèbre Linéaire", "Analyse").
+    - `level_min` (String): Niveau pédagogique minimal d'introduction.
+    - `level_max` (String, Nullable): Niveau où le concept est maîtrisé.
+    - `description_short` (String, Nullable): Description concise.
+    - `created_at` (DateTime): Date de création.
+    - `updated_at` (DateTime): Date de dernière mise à jour.
+
+### 1.2. `Definition`
+Représente une définition spécifique d'un concept.
+- **Propriétés:**
+    - `id` (UUID): Identifiant unique de la définition.
+    - `type` (String): Type de définition ("formelle", "intuitive", "visuelle").
+    - `level` (String, Nullable): Niveau spécifique si la définition en dépend.
+    - `content_latex` (String): Le texte de la définition en LaTeX.
+    - `source` (String, Nullable): Source de la définition.
+    - `is_verified` (Boolean): Indique si la définition a été vérifiée.
+    - `created_at` (DateTime): Date de création.
+
+### 1.3. `Property`
+Représente une propriété associée à un concept.
+- **Propriétés:**
+    - `id` (UUID): Identifiant unique de la propriété.
+    - `name` (String): Nom de la propriété (ex: "Linéarité").
+    - `description_latex` (String, Nullable): Description ou formulation en LaTeX.
+    - `is_verified` (Boolean): Indique si la propriété a été vérifiée.
+    - `created_at` (DateTime): Date de création.
+
+### 1.4. `Theorem`
+Représente un théorème, lemme ou proposition.
+- **Propriétés:**
+    - `id` (UUID): Identifiant unique du théorème.
+    - `name` (String, Nullable): Nom du théorème.
+    - `statement_latex` (String): Énoncé du théorème en LaTeX.
+    - `proof_sketch_latex` (String, Nullable): Esquisse de preuve en LaTeX.
+    - `proof_full_latex` (String, Nullable): Preuve complète en LaTeX.
+    - `is_verified` (Boolean): Indique si le théorème a été vérifié.
+    - `created_at` (DateTime): Date de création.
+
+### 1.5. `Pitfall`
+Représente une erreur courante ou un point de confusion pédagogique.
+- **Propriétés:**
+    - `id` (UUID): Identifiant unique du piège.
+    - `description_short` (String): Description concise.
+    - `explanation_latex` (String, Nullable): Explication détaillée en LaTeX.
+    - `level` (String, Nullable): Niveau où ce piège est le plus fréquent.
+    - `is_verified` (Boolean): Indique si le piège a été vérifié.
+    - `created_at` (DateTime): Date de création.
+
+### 1.6. `Analogy`
+Représente une analogie physique ou issue d'autres domaines.
+- **Propriétés:**
+    - `id` (UUID): Identifiant unique de l'analogie.
+    - `title` (String, Nullable): Titre court.
+    - `description_latex` (String): Description détaillée en LaTeX.
+    - `domain` (String, Nullable): Domaine de l'analogie (ex: "Physique").
+    - `level` (String, Nullable): Niveau où l'analogie est pertinente.
+    - `is_verified` (Boolean): Indique si l'analogie a été vérifiée.
+    - `created_at` (DateTime): Date de création.
+
+### 1.7. `Application`
+Représente une application concrète ou un lien transdisciplinaire d'un concept.
+- **Propriétés:**
+    - `id` (UUID): Identifiant unique de l'application.
+    - `domain` (String): Domaine d'application (ex: "Ingénierie").
+    - `description_latex` (String): Description en LaTeX.
+    - `is_verified` (Boolean): Indique si l'application a été vérifiée.
+    - `created_at` (DateTime): Date de création.
+
+### 1.8. `HistoricalNote`
+Représente une information historique liée à un concept ou un théorème.
+- **Propriétés:**
+    - `id` (UUID): Identifiant unique de la note.
+    - `content_latex` (String): Le texte de la note historique en LaTeX.
+    - `date_start` (Date, Nullable): Date de début de la période concernée.
+    - `date_end` (Date, Nullable): Date de fin de la période concernée.
+    - `is_verified` (Boolean): Indique si la note a été vérifiée.
+    - `created_at` (DateTime): Date de création.
+
+---
+
+## 2. Types de Relations (Relationships)
+
+Les relations connectent les nœuds et décrivent leurs interactions.
+
+### 2.1. `HAS_DEFINITION`
+- **Description:** Un `Concept` a une `Definition`.
+- **Direction:** `(Concept)-[:HAS_DEFINITION]->(Definition)`
+
+### 2.2. `HAS_PROPERTY`
+- **Description:** Un `Concept` a une `Property`.
+- **Direction:** `(Concept)-[:HAS_PROPERTY]->(Property)`
+
+### 2.3. `REQUIRES`
+- **Description:** Un `Concept` requiert un autre `Concept` comme prérequis.
+- **Propriétés:**
+    - `type` (String): Type de prérequis ("required", "recommended").
+- **Direction:** `(Concept)-[:REQUIRES {type: "required"}]->(Concept)`
+
+### 2.4. `USES`
+- **Description:** Un `Theorem` utilise un `Concept`.
+- **Direction:** `(Theorem)-[:USES]->(Concept)`
+
+### 2.5. `DEFINES`
+- **Description:** Un `Concept` est défini par un `Theorem` (ou un théorème définit un concept).
+- **Direction:** `(Theorem)-[:DEFINES]->(Concept)` ou `(Concept)-[:DEFINED_BY]->(Theorem)` (selon la perspective).
+
+### 2.6. `HAS_PITFALL`
+- **Description:** Un `Concept` est associé à un `Pitfall`.
+- **Direction:** `(Concept)-[:HAS_PITFALL]->(Pitfall)`
+
+### 2.7. `ILLUSTRATED_BY`
+- **Description:** Un `Concept` est illustré par une `Analogy`.
+- **Direction:** `(Concept)-[:ILLUSTRATED_BY]->(Analogy)`
+
+### 2.8. `HAS_APPLICATION`
+- **Description:** Un `Concept` a une `Application`.
+- **Direction:** `(Concept)-[:HAS_APPLICATION]->(Application)`
+
+### 2.9. `HAS_HISTORICAL_NOTE`
+- **Description:** Un `Concept` ou un `Theorem` est associé à une `HistoricalNote`.
+- **Direction:** `(Concept)-[:HAS_HISTORICAL_NOTE]->(HistoricalNote)` ou `(Theorem)-[:HAS_HISTORICAL_NOTE]->(HistoricalNote)`
+
+---
+
+## 3. Indexation (Exemples)
+
+Pour optimiser les requêtes, des index seraient créés sur les propriétés clés.
+
+- Index sur `Concept.id`, `Concept.name`, `Concept.slug`
+- Index sur `Definition.id`, `Definition.concept_id`
+- Index sur `Theorem.id`, `Theorem.name`
+- Index sur les propriétés `id` des autres nœuds.
+- Index sur les propriétés de relation comme `REQUIRES.type`.
+
+---
+
+Cette modélisation graphe permet de naviguer et d'interroger les connaissances mathématiques et pédagogiques de manière très flexible et performante pour des requêtes basées sur les relations.

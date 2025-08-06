@@ -1,0 +1,45 @@
+graph TD
+    %% Déclaration des nœuds
+    A[Début Projet - Mode Autonome]
+    B[IA Génère le Plan Interne]
+    C{Bloc à traiter ?}
+    D[IA Génère un Bloc]
+    E[IA Effectue le QC sur le Brouillon]
+    F{Score QC suffisant ?}
+    G[Bloc validé automatiquement]
+    H{Raffinement possible ?}
+    I[IA Lance le Raffinement basé sur le QC]
+    J[Bloc marqué en échec de raffinement]
+    K{Point de contrôle atteint ?}
+    L[Révision utilisateur optionnelle]
+    M{Décision utilisateur : validé ou modifier}
+    N{Plan terminé ?}
+    O[IA Replanifie avec modifications]
+    P[IA Compile et Exporte l’Ouvrage]
+    Q[Fin du Projet]
+
+    %% Transitions principales
+    A --> B
+    B --> C
+    C -- Oui --> D
+    D --> E
+    E --> F
+    F -- Oui --> G
+    F -- Non --> H
+    H -- Oui --> I
+    I --> E
+    H -- Non --> J
+    G --> C
+    J --> C
+    C -- Non --> K
+    K -- Oui --> L
+    L --> M
+    M -- validé --> N
+    M -- modifier --> O
+    O --> C
+    K -- Non --> N
+    N -- Oui --> P
+    P --> Q
+    N -- Non --> C
+    %% Note: Le flux de révision globale (L->M->N/O) est un point d'interaction optionnel.
+    %% Le processus principal est la boucle D->E->F->G/J->C.

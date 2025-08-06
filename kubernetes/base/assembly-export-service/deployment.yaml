@@ -1,0 +1,45 @@
+# Fichier placeholder pour deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: assembly-export-service-deployment # Nom du déploiement Kubernetes
+  labels:
+    app: assembly-export-service # Labels pour identifier le déploiement
+spec:
+  replicas: 2 # Nombre d'instances (pods) du Assembly Export Service à maintenir en cours d'exécution
+  selector:
+    matchLabels:
+      app: assembly-export-service # Sélecteur pour les pods gérés par ce déploiement
+  template:
+    metadata:
+      labels:
+        app: assembly-export-service # Labels pour les pods
+    spec:
+      containers:
+      - name: assembly-export-service # Nom du conteneur
+        image: your-docker-registry.com/math-agent/assembly-export-service:latest # Remplacez par l'image Docker de votre Assembly Export Service
+        ports:
+        - containerPort: 8000 # Le port sur lequel l'application FastAPI écoute
+        resources:
+          requests: # Ressources minimales requises par le conteneur
+            cpu: "500m" # 500 milliCPU
+            memory: "1024Mi" # 1024 Mégaoctets (1 Go)
+          limits: # Limites maximales de ressources que le conteneur peut utiliser
+            cpu: "2500m" # 2500 milliCPU (2.5 CPU complets)
+            memory: "4096Mi" # 4096 Mégaoctets (4 Go)
+        livenessProbe: # Sonde de vivacité: vérifie si l'application est toujours en cours d'exécution
+          httpGet:
+            path: /health # Endpoint de santé du Assembly Export Service
+            port: 8000
+          initialDelaySeconds: 30 # Délai avant la première vérification
+          periodSeconds: 15 # Fréquence des vérifications
+        readinessProbe: # Sonde de préparation: vérifie si l'application est prête à recevoir du trafic
+          httpGet:
+            path: /ready # Endpoint de préparation du Assembly Export Service
+            port: 8000
+          initialDelaySeconds: 35 # Délai avant la première vérification
+          periodSeconds: 15 # Fréquence des vérifications
+        env: # Variables d'environnement pour le conteneur
+        - name: PERSISTENCE_SERVICE_URL # URL du service de persistance
+          value: http://persistence-service-service:80 # Communication interne via le nom du service Kubernetes
+        # Ajoutez d'autres variables d'environnement nécessaires ici (ex: pour les chemins des outils externes comme Pandoc)

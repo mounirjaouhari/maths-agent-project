@@ -1,0 +1,29 @@
+# Fichier placeholder pour hpa.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: celery-worker-export-hpa # Nom de l'HorizontalPodAutoscaler
+  labels:
+    app: celery-worker-export # Labels pour identifier le HPA
+spec:
+  scaleTargetRef: # Référence au déploiement que ce HPA va scaler
+    apiVersion: apps/v1
+    kind: Deployment
+    name: celery-worker-export-deployment # Nom du déploiement des workers Celery d'exportation
+  minReplicas: 1 # Nombre minimum de réplicas (pods) à maintenir
+  maxReplicas: 5 # Nombre maximum de réplicas (pods) que le HPA peut créer, ajusté pour les charges d'exportation
+  metrics: # Métriques sur lesquelles l'auto-scalabilité est basée
+    - type: Resource # Type de métrique: basée sur les ressources du pod
+      resource:
+        name: cpu # Nom de la ressource (CPU)
+        target:
+          type: Utilization # Type de cible: utilisation moyenne
+          averageUtilization: 70 # Cible d'utilisation moyenne du CPU à 70%
+    # D'autres métriques pourraient être ajoutées ici, par exemple:
+    # - type: Pods # Basé sur le nombre de tâches en attente dans la queue Celery (nécessite un custom metrics adapter)
+    #   pods:
+    #     metric:
+    #       name: celery_export_queue_length # Nom de la métrique personnalisée pour la queue d'exportation
+    #     target:
+    #       type: AverageValue
+    #       averageValue: 2 # Scaler si la longueur moyenne de la queue d'exportation dépasse 2 tâches (les tâches d'exportation sont souvent très lourdes)

@@ -1,0 +1,16 @@
+# Fichier placeholder pour service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql-service # Nom du service Kubernetes
+  labels:
+    app: postgresql # Labels pour identifier le service
+spec:
+  selector:
+    app: postgresql # Sélecteur pour les pods que ce service va exposer (doit correspondre aux labels du StatefulSet)
+  ports:
+    - protocol: TCP # Protocole utilisé (TCP)
+      port: 5432 # Le port sur lequel le service écoute (port par défaut de PostgreSQL)
+      targetPort: 5432 # Le port sur lequel les conteneurs PostgreSQL écoutent
+  type: ClusterIP # Type de service: ClusterIP rend le service accessible uniquement à l'intérieur du cluster.
+                  # Ce service est interne et n'est pas exposé directement à l'extérieur.

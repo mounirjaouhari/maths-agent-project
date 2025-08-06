@@ -1,0 +1,62 @@
+erDiagram
+    mathematical_concepts {
+        UUID concept_id PK
+        VARCHAR name UK
+        VARCHAR slug UK
+        VARCHAR domain
+        VARCHAR level_min
+        VARCHAR level_max "Nullable"
+        TEXT description_short "Nullable"
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    concept_definitions {
+        UUID definition_id PK
+        UUID concept_id FK
+        VARCHAR type
+        VARCHAR level "Nullable"
+        TEXT content_latex
+        VARCHAR source "Nullable"
+        BOOLEAN is_verified
+        TIMESTAMP created_at
+    }
+    concept_properties {
+        UUID property_id PK
+        UUID concept_id FK
+        VARCHAR name
+        TEXT description_latex "Nullable"
+        BOOLEAN is_verified
+        TIMESTAMP created_at
+    }
+    theorems {
+        UUID theorem_id PK
+        VARCHAR name "Nullable"
+        TEXT statement_latex
+        TEXT proof_sketch_latex "Nullable"
+        TEXT proof_full_latex "Nullable"
+        BOOLEAN is_verified
+        TIMESTAMP created_at
+    }
+    %% Jointure pour les prérequis (relation Many-to-Many entre concepts)
+    concept_prerequisites {
+        UUID concept_id FK
+        UUID prerequisite_concept_id FK
+        VARCHAR type
+        %% Clé primaire composite: PK (concept_id, prerequisite_concept_id)
+    }
+    %% Jointure pour les relations concept-théorème (relation Many-to-Many)
+    concept_theorem_relation {
+        UUID concept_id FK
+        UUID theorem_id FK
+        VARCHAR relation_type
+        %% Clé primaire composite: PK (concept_id, theorem_id, relation_type)
+    }
+
+    mathematical_concepts ||--o{ concept_definitions : "has"
+    mathematical_concepts ||--o{ concept_properties : "has"
+    mathematical_concepts }o--o{ concept_prerequisites : "requires"
+    mathematical_concepts }o--o{ concept_theorem_relation : "related_to"
+    theorems }o--o{ concept_theorem_relation : "related_to"
+    %% Note: Les tables concept_prerequisites et concept_theorem_relation
+    %% sont des tables de jointure implémentant des relations Many-to-Many.
+    %% Le diagramme ERD standard les montre comme des entités pour la clarté des FKs.

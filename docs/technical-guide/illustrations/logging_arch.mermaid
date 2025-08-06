@@ -1,0 +1,36 @@
+---
+config:
+  layout: elk
+---
+flowchart TD
+ subgraph Services_Backend["Services_Backend"]
+        L1["Logs stdout/stderr"]
+        SVC1["Service 1"]
+        L2["Logs stdout/stderr"]
+        SVC2["Service 2"]
+  end
+    SVC1 -- Génère --> L1
+    SVC2 -- Génère --> L2
+    L1 -- Collecte --> AG["Agent de Collecte"]
+    L2 -- Collecte --> AG
+    AG -- Envoie --> LS["Système de Logging"]
+    LS -- Stocke --> DB_LOGS["Base de Données Logs"]
+    DB_LOGS -- Visualise --> UI_LOGS["Interface Visualisation"]
+    SVC1 --> note1["Note: Service 1 inclut Workflow, Génération, etc."]
+    SVC2 --> note2["Note: Service 2 inclut QC, Persistance, etc."]
+    AG --> note3["Note: Agents incluent Promtail, Filebeat, etc."]
+    LS --> note4["Note: Système inclut Loki, Logstash; Base inclut Elasticsearch, Loki; Interface inclut Grafana, Kibana."]
+     SVC1:::service
+     L1:::logSource
+     SVC2:::service
+     L2:::logSource
+     AG:::agent
+     LS:::loggingSystem
+     DB_LOGS:::logDB
+     UI_LOGS:::ui
+    classDef service fill:#add8e6,stroke:#318ce7,stroke-width:2px
+    classDef logSource fill:#ffebcd,stroke:#ffb347,stroke-width:2px
+    classDef agent fill:#ffff99,stroke:#cc9900,stroke-width:2px
+    classDef loggingSystem fill:#90ee90,stroke:#32cd32,stroke-width:2px
+    classDef logDB fill:#d3d3d3,stroke:#333,stroke-width:2px
+    classDef ui fill:#add8e6,stroke:#318ce7,stroke-width:2px

@@ -1,0 +1,33 @@
+graph TD
+    A[Version Document - Portée : Section, Chapitre, Document] --> B[Collecte Contenu - Plusieurs Blocs Validés]
+    B --> C[Service Persistance]
+    C -- Contenu des Blocs --> B
+    B --> D[Analyse de la Structure - Arborescence Document]
+    B --> E[Analyse du Texte - NLP]
+    D --> F[Vérification des Références et Prérequis]
+    E --> F
+    E --> G[Vérification de la Notation]
+    E --> H[Détection des Répétitions]
+    D --> I[Analyse de la Structure Logique]
+    E --> I
+    F --> J[Service Base de Connaissances - KB Service]
+    G --> J
+    H --> J
+    I --> J
+    J -- Infos KB : Relations, Définitions --> F
+    J -- Infos KB : Relations, Définitions --> G
+    J -- Infos KB : Relations, Définitions --> I
+    F --> K[Identification des Incohérences]
+    G --> K
+    H --> K
+    I --> K
+    K --> L[Partie du Rapport QC]
+
+    %% Styles
+    classDef process fill:#90ee90,stroke:#32cd32,stroke-width:2px
+    classDef data fill:#ffebcd,stroke:#ffb347,stroke-width:2px
+    classDef service fill:#add8e6,stroke:#318ce7,stroke-width:2px
+    
+    class B,D,E,F,G,H,I,K process
+    class A,L data
+    class C,J service

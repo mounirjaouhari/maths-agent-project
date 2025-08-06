@@ -1,0 +1,35 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-migration-job # Nom du Job de migration
+  labels:
+    app: db-migration # Labels pour identifier le Job
+spec:
+  template:
+    metadata:
+      labels:
+        app: db-migration # Labels pour les pods créés par ce Job
+    spec:
+      restartPolicy: OnFailure # Redémarrer le pod en cas d'échec jusqu'à ce que le Job réussisse
+      containers:
+      - name: migration-container # Nom du conteneur de migration
+        image: your-docker-registry.com/math-agent/persistence-service:latest # Utiliser l'image du service de persistance qui contient Alembic
+        command: ["/bin/sh", "-c"] # Exécuter un shell pour lancer les commandes
+        args:
+          - "alembic upgrade head" # Commande pour appliquer les migrations Alembic
+        env: # Variables d'environnement pour la connexion à la base de données
+        - name: DATABASE_URL # URL de connexion à la base de données PostgreSQL
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets # Nom du secret Kubernetes contenant l'URL de la base de données
+              key: database_url # Clé dans le secret
+        resources:
+          requests: # Ressources minimales requises pour le Job
+            cpu: "100m"
+            memory: "128Mi"
+          limits: # Limites maximales de ressources
+            cpu: "200m"
+            memory: "256Mi"
+      # Les jobs de migration peuvent nécessiter un service account avec les permissions nécessaires pour accéder aux secrets
+      # serviceAccountName: migration-service-account
+  backoffLimit: 3 # Nombre de fois que le Job peut être réessayé en cas d'échec

@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: neo4j-statefulset # Nom du StatefulSet
+  labels:
+    app: neo4j # Labels pour identifier le StatefulSet
+spec:
+  serviceName: "neo4j-service" # Doit correspondre au nom du service headless pour StatefulSets
+  replicas: 1 # Nombre de réplicas. Pour une base de données primaire, souvent 1. Pour la haute disponibilité, utiliser des réplicas et une logique de cluster Neo4j.
+  selector:
+    matchLabels:
+      app: neo4j # Sélecteur pour les pods gérés par ce StatefulSet
+  template:
+    metadata:
+      labels:
+        app: neo4j # Labels pour les pods
+    spec:
+      containers:
+      - name: neo4j # Nom du conteneur
+        image: neo4j:4.4 # Image Docker de Neo4j (version 4.4 recommandée pour la stabilité)
+        ports:
+        - containerPort: 7687 # Port Bolt par défaut de Neo4j (pour les connexions clientes)
+        - containerPort: 7474 # Port HTTP par défaut de Neo4j (pour l'interface web)
+        env: # Variables d'environnement pour la configuration de Neo4j
+        - name: NEO4J_AUTH # Nom d'utilisateur/mot de passe pour l'authentification (format neo4j/password)
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets # Nom du secret Kubernetes contenant les informations de la base de données
+              key: neo4j_auth # Clé dans le secret
+        - name: NEO4J_ACCEPT_LICENSE_AGREEMENT # Accepter l'accord de licence Neo4j
+          value: "yes"
+        resources:
+          requests: # Ressources minimales requises
+            cpu: "1000m" # 1 CPU complet
+            memory: "2048Mi" # 2 Go
+          limits: # Limites maximales de ressources
+            cpu: "2000m" # 2 CPU complets
+            memory: "4096Mi" # 4 Go (ajuster en fonction de la taille de la KB)
+        volumeMounts: # Montage du volume persistant pour les données de la base de données
+        - name: neo4j-data # Nom du volume
+          mountPath: /data # Chemin de montage dans le conteneur
+      volumes: # Définition des volumes (pour les secrets)
+      - name: db-secrets
+        secret:
+          secretName: app-secrets # Référence au secret global des applications pour les clés DB
+  volumeClaimTemplates: # Modèle de PersistentVolumeClaim pour le stockage persistant
+  - metadata:
+      name: neo4j-data # Nom du PVC (sera utilisé comme nom de volumeMount)
+    spec:
+      accessModes: [ "ReadWriteOnce" ] # Mode d'accès (lecture/écriture pour un seul pod)
+      storageClassName: standard # Classe de stockage (doit être configurée dans votre cluster Kubernetes)
+      resources:
+        requests:
+          storage: 10Gi # Taille du stockage persistant demandé (10 Go)

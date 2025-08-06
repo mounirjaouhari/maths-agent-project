@@ -1,0 +1,16 @@
+graph TD
+    A[Résultats Sous-module\nVérification Math (5.1.2)] --> B(Logique de Combinaison)
+    C[Résultats Sous-module\nAnalyse Pédago/Style (5.1.3)] --> B
+    D[Résultats Sous-module\nCohérence Globale (5.1.4)] --> B
+    E[Autres Facteurs\n(Ex: Type de Contenu, Niveau)] --> B
+    B --> F(Gestion des Échecs Critiques)
+    F --> G[Score Composite Pondéré]
+    G --> H[Score de Confiance Global]
+    H --> I[Partie du Rapport QC]
+
+    %% Styles
+    classDef process fill:#90ee90,stroke:#32cd32,stroke-width:2px
+    classDef data fill:#ffebcd,stroke:#ffb347,stroke-width:2px
+    
+    class B,F,G process
+    class A,C,D,E,H,I data

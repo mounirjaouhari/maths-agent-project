@@ -1,0 +1,16 @@
+# Fichier placeholder pour service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway-service # Nom du service Kubernetes
+  labels:
+    app: api-gateway # Labels pour identifier le service
+spec:
+  selector:
+    app: api-gateway # Sélecteur pour les pods que ce service va exposer (doit correspondre aux labels du déploiement)
+  ports:
+    - protocol: TCP # Protocole utilisé (TCP)
+      port: 80 # Le port sur lequel le service écoute (port du service)
+      targetPort: 8000 # Le port sur lequel les conteneurs de l'API Gateway écoutent (port du conteneur)
+  type: ClusterIP # Type de service: ClusterIP rend le service accessible uniquement à l'intérieur du cluster.
+                  # Pour l'exposer à l'extérieur, un Ingress ou LoadBalancer sera utilisé.

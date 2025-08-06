@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-worker-generation-deployment # Nom du déploiement Kubernetes
+  labels:
+    app: celery-worker-generation # Labels pour identifier le déploiement
+spec:
+  replicas: 2 # Nombre d'instances (pods) des workers de génération à maintenir en cours d'exécution
+  selector:
+    matchLabels:
+      app: celery-worker-generation # Sélecteur pour les pods gérés par ce déploiement
+  template:
+    metadata:
+      labels:
+        app: celery-worker-generation # Labels pour les pods
+    spec:
+      containers:
+      - name: celery-worker-generation # Nom du conteneur
+        image: your-docker-registry.com/math-agent/celery-worker-generation:latest # Remplacez par l'image Docker de votre worker Celery de génération
+        command: ["celery"] # Commande principale pour démarrer Celery
+        args: ["-A", "app.celery_app", "worker", "-l", "info", "-Q", "generation"] # Arguments pour démarrer le worker, écouter la queue 'generation'
+        resources:
+          requests: # Ressources minimales requises par le conteneur
+            cpu: "500m" # 500 milliCPU
+            memory: "1024Mi" # 1024 Mégaoctets (1 Go)
+          limits: # Limites maximales de ressources que le conteneur peut utiliser
+            cpu: "2000m" # 2000 milliCPU (2 CPU complets)
+            memory: "4096Mi" # 4096 Mégaoctets (4 Go)
+        livenessProbe: # Sonde de vivacité: vérifie si le processus Celery est toujours en cours d'exécution
+          exec:
+            command: ["celery", "-A", "app.celery_app", "inspect", "ping"] # Commande pour vérifier la santé du worker
+          initialDelaySeconds: 30 # Délai avant la première vérification
+          periodSeconds: 15 # Fréquence des vérifications
+          timeoutSeconds: 5 # Délai avant que la commande ne soit considérée comme échouée
+        env: # Variables d'environnement pour le conteneur
+        - name: CELERY_BROKER_URL # URL du broker Celery (Redis)
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets # Nom du secret Kubernetes
+              key: celery_broker_url # Clé dans le secret
+        - name: CELERY_RESULT_BACKEND # URL pour stocker les résultats des tâches Celery
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: celery_result_backend
+        - name: GENERATION_SERVICE_URL # URL du service de génération (si les workers l'appellent)
+          value: http://generation-service-service:80 # Communication interne via le nom du service Kubernetes
+        # Si les clés API LLM sont utilisées directement par le worker, elles devraient être injectées ici aussi
+        # - name: OPENAI_API_KEY
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: app-secrets
+        #       key: openai_api_key

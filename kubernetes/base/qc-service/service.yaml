@@ -1,0 +1,16 @@
+# Fichier placeholder pour service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: qc-service-service # Nom du service Kubernetes
+  labels:
+    app: qc-service # Labels pour identifier le service
+spec:
+  selector:
+    app: qc-service # Sélecteur pour les pods que ce service va exposer (doit correspondre aux labels du déploiement)
+  ports:
+    - protocol: TCP # Protocole utilisé (TCP)
+      port: 80 # Le port sur lequel le service écoute (port du service)
+      targetPort: 8000 # Le port sur lequel les conteneurs du QC Service écoutent (port du conteneur)
+  type: ClusterIP # Type de service: ClusterIP rend le service accessible uniquement à l'intérieur du cluster.
+                  # Ce service n'est pas exposé directement à l'extérieur, il est interne.

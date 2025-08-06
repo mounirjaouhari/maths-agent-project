@@ -1,0 +1,145 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: prod-environment # Nom de la kustomization
+namespace: math-agent-prod # Namespace dédié à l'environnement de production
+
+bases:
+  - ../base # Référence à la configuration de base commune
+
+# Ajout d'un suffixe aux noms des ressources pour l'environnement de production (ex: -prod)
+nameSuffix: -prod
+
+# Définition des patches pour personnaliser les ressources de base
+patches:
+  - target:
+      kind: Deployment
+      name: api-gateway-deployment # Cible le déploiement de l'API Gateway
+    patch: |
+      - op: replace # Opération de remplacement
+        path: /spec/replicas # Chemin vers le nombre de réplicas
+        value: 3 # Augmente le nombre de réplicas pour la production
+  - target:
+      kind: Deployment
+      name: workflow-service-deployment # Cible le déploiement du Workflow Service
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 3 # Augmente le nombre de réplicas pour la production
+  - target:
+      kind: Deployment
+      name: persistence-service-deployment # Cible le déploiement du Persistence Service
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 3 # Augmente le nombre de réplicas pour la production
+  - target:
+      kind: Deployment
+      name: kb-service-deployment # Cible le déploiement du KB Service
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 3 # Augmente le nombre de réplicas pour la production
+  - target:
+      kind: Deployment
+      name: generation-service-deployment # Cible le déploiement du Generation Service
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 3 # Augmente le nombre de réplicas pour la production
+  - target:
+      kind: Deployment
+      name: qc-service-deployment # Cible le déploiement du QC Service
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 3 # Augmente le nombre de réplicas pour la production
+  - target:
+      kind: Deployment
+      name: interaction-service-deployment # Cible le déploiement du Interaction Service
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 3 # Augmente le nombre de réplicas pour la production
+  - target:
+      kind: Deployment
+      name: assembly-export-service-deployment # Cible le déploiement du Assembly Export Service
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 2 # Augmente le nombre de réplicas pour la production (les tâches d'export peuvent être lourdes)
+  # Patches pour les HPAs (si nécessaire, pour ajuster min/max réplicas ou cibles d'utilisation CPU)
+  - target:
+      kind: HorizontalPodAutoscaler
+      name: celery-worker-general-hpa # Cible le HPA des workers généraux
+    patch: |
+      - op: replace
+        path: /spec/minReplicas
+        value: 2 # Min de 2 réplicas en production
+      - op: replace
+        path: /spec/maxReplicas
+        value: 10 # Max de 10 réplicas en production
+  - target:
+      kind: HorizontalPodAutoscaler
+      name: celery-worker-generation-hpa # Cible le HPA des workers de génération
+    patch: |
+      - op: replace
+        path: /spec/minReplicas
+        value: 2 # Min de 2 réplicas en production
+      - op: replace
+        path: /spec/maxReplicas
+        value: 20 # Max de 20 réplicas en production pour les tâches LLM
+  - target:
+      kind: HorizontalPodAutoscaler
+      name: celery-worker-qc-hpa # Cible le HPA des workers QC
+    patch: |
+      - op: replace
+        path: /spec/minReplicas
+        value: 2 # Min de 2 réplicas en production
+      - op: replace
+        path: /spec/maxReplicas
+        value: 15 # Max de 15 réplicas en production pour les tâches QC
+  - target:
+      kind: HorizontalPodAutoscaler
+      name: celery-worker-export-hpa # Cible le HPA des workers d'exportation
+    patch: |
+      - op: replace
+        path: /spec/minReplicas
+        value: 1 # Min de 1 réplica en production
+      - op: replace
+        path: /spec/maxReplicas
+        value: 5 # Max de 5 réplicas en production pour les tâches d'exportation
+  - target:
+      kind: Ingress
+      name: math-agent-ingress # Cible la ressource Ingress
+    patch: |
+      - op: replace
+        path: /spec/rules/0/host
+        value: api.your-production-domain.com # Modifie le nom de domaine pour la production
+      - op: replace
+        path: /spec/rules/1/host
+        value: app.your-production-domain.com # Modifie le nom de domaine pour la production
+      - op: replace
+        path: /spec/tls/0/hosts
+        value:
+          - api.your-production-domain.com
+          - app.your-production-domain.com
+      - op: replace
+        path: /spec/tls/0/secretName # Nom du secret TLS pour la production
+        value: tls-secret-math-agent-prod # Utilise un secret TLS spécifique à la production
+
+# Définition des ConfigMaps et Secrets spécifiques à la production (si non gérés par un gestionnaire de secrets externe)
+# secretGenerator:
+#   - name: app-secrets-prod
+#     literals:
+#       - DATABASE_URL=postgresql://user:password@postgresql-service-prod:5432/math_agent_prod
+#       - REDIS_PASSWORD=prod_redis_pass
+#       - OPENAI_API_KEY=your_prod_openai_key
+#       - GOOGLE_AI_API_KEY=your_prod_google_key
+#       - ANTHROPIC_API_KEY=your_prod_anthropic_key
+#   - name: db-secrets-prod
+#     literals:
+#       - postgres_db=math_agent_prod
+#       - postgres_user=prod_user
+#       - postgres_password=prod_password
+#       - neo4j_auth=neo4j/prod_password

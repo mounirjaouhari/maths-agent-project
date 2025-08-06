@@ -1,0 +1,257 @@
+openapi: 3.0.0
+info:
+  title: QC Service Internal API
+  description: API interne pour le contrôle qualité et la vérification du contenu mathématique et pédagogique.
+  version: 1.0.0
+servers:
+  - url: http://qc-service-service:80 # URL interne du service Kubernetes
+    description: Environnement Kubernetes interne
+paths:
+  /internal/analyze/content-block:
+    post:
+      summary: Déclencher une analyse complète pour un bloc de contenu
+      operationId: analyzeContentBlock
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyzeContentBlockRequest'
+      responses:
+        '200':
+          description: Rapport QC généré avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QCReport'
+        '400':
+          description: Paramètres d'entrée invalides
+        '500':
+          description: Erreur interne du service ou échec de l'analyse
+  /internal/analyze/exercise:
+    post:
+      summary: Déclencher une analyse pour un exercice (énoncé et solution)
+      operationId: analyzeExercise
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyzeExerciseRequest'
+      responses:
+        '200':
+          description: Rapport QC d'exercice généré avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QCReport'
+        '400':
+          description: Paramètres d'entrée invalides
+        '500':
+          description: Erreur interne du service ou échec de l'analyse
+  /internal/verify/mathematical-statement:
+    post:
+      summary: Vérifier la justesse d'une seule assertion ou formule mathématique
+      operationId: verifyMathematicalStatement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyMathematicalStatementRequest'
+      responses:
+        '200':
+          description: Résultat de la vérification mathématique
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationResult'
+        '400':
+          description: Paramètres d'entrée invalides
+        '500':
+          description: Erreur interne du service ou échec de la vérification
+  /internal/analyze/coherence:
+    post:
+      summary: Déclencher une analyse de cohérence sur une partie ou l'intégralité d'une version de document
+      operationId: analyzeCoherence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnalyzeCoherenceRequest'
+      responses:
+        '200':
+          description: Rapport de cohérence généré avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QCReport'
+        '400':
+          description: Paramètres d'entrée invalides
+        '500':
+          description: Erreur interne du service ou échec de l'analyse
+components:
+  schemas:
+    AnalyzeContentBlockRequest:
+      type: object
+      required:
+        - block_id
+        - content_latex
+        - block_type
+        - level
+        - style
+      properties:
+        block_id:
+          type: string
+          format: uuid
+          description: ID du bloc de contenu en cours d'analyse
+        content_latex:
+          type: string
+          description: Contenu du bloc en format LaTeX
+        block_type:
+          type: string
+          enum: [definition, intuition, proof_skeleton, exercise, text, image]
+          description: Type du bloc de contenu
+        level:
+          type: string
+          description: Niveau pédagogique cible
+        style:
+          type: string
+          enum: [Bourbaki, Feynman, Hybride]
+          description: Style rédactionnel
+        context:
+          type: object
+          nullable: true
+          description: Contexte supplémentaire pour l'analyse (ex: concepts couverts par la section)
+          additionalProperties: true
+    AnalyzeExerciseRequest:
+      type: object
+      required:
+        - exercise_id
+        - prompt_latex
+        - level
+        - exercise_type
+      properties:
+        exercise_id:
+          type: string
+          format: uuid
+          description: ID de l'exercice
+        prompt_latex:
+          type: string
+          description: L'énoncé de l'exercice en LaTeX
+        solution_latex:
+          type: string
+          nullable: true
+          description: La solution de l'exercice en LaTeX (optionnel, peut être analysé séparément)
+        level:
+          type: string
+          description: Niveau cible
+        exercise_type:
+          type: string
+          enum: [calculation, proof, application]
+          description: Type de l'exercice
+        context:
+          type: object
+          nullable: true
+          description: Contexte supplémentaire pour l'analyse (ex: concepts testés par l'exercice)
+          additionalProperties: true
+    VerifyMathematicalStatementRequest:
+      type: object
+      required:
+        - statement_latex
+      properties:
+        statement_latex:
+          type: string
+          description: La formule ou l'assertion mathématique en LaTeX à vérifier
+        context:
+          type: object
+          nullable: true
+          description: Contexte pour la vérification (ex: hypothèses, définitions pertinentes)
+          additionalProperties: true
+    VerificationResult:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [verified, refuted, undetermined, error, syntax_error]
+          description: Statut de la vérification
+        details:
+          type: string
+          nullable: true
+          description: Détails ou message d'erreur de la vérification
+        confidence:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          description: Niveau de confiance dans le résultat (0.0 à 1.0)
+    AnalyzeCoherenceRequest:
+      type: object
+      required:
+        - document_version_id
+        - scope
+      properties:
+        document_version_id:
+          type: string
+          format: uuid
+          description: ID de la version du document à analyser
+        scope:
+          type: string
+          enum: [section, chapter, document]
+          description: Portée de l'analyse de cohérence
+        context:
+          type: object
+          nullable: true
+          description: Contexte supplémentaire pour l'analyse
+          additionalProperties: true
+    QCReport:
+      type: object
+      properties:
+        overall_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 85.5
+        status:
+          type: string
+          enum: [passed, failed, partial_success]
+          example: failed
+        problems:
+          type: array
+          items:
+            $ref: '#/components/schemas/QCProblem'
+        details:
+          type: object
+          description: Détails bruts des analyses par sous-module (math, pedago, coherence)
+          additionalProperties: true
+    QCProblem:
+      type: object
+      required:
+        - type
+        - severity
+        - description
+      properties:
+        type:
+          type: string
+          enum: [math_error, clarity_issue, style_mismatch, coherence_issue, formatting_error, pedagogic_pitfall, other]
+          example: math_error
+        severity:
+          type: string
+          enum: [critical, major, minor, warning]
+          example: critical
+        description:
+          type: string
+          example: "L'égalité $x^2+y^2=0$ n'est vraie que si $x=0$ et $y=0$, pas pour tout $x,y$."
+        location:
+          type: object
+          description: Localisation précise du problème dans le contenu (ex: ligne, caractère, formule_id)
+          nullable: true
+          example:
+            line: 10
+            char_start: 5
+            char_end: 15
+        suggested_fix:
+          type: string
+          nullable: true

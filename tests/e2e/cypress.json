@@ -1,0 +1,29 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "projectId": "your-cypress-project-id",
+  "viewportWidth": 1280,
+  "viewportHeight": 720,
+  "chromeWebSecurity": false,
+  "defaultCommandTimeout": 10000,
+  "pageLoadTimeout": 60000,
+  "responseTimeout": 30000,
+  "video": true,
+  "videosFolder": "cypress/videos",
+  "screenshotsFolder": "cypress/screenshots",
+  "fixturesFolder": "cypress/fixtures",
+  "fileServerFolder": ".",
+  "integrationFolder": "cypress/integration",
+  "supportFile": "cypress/support/e2e.js",
+  "testFiles": "**/*.cy.js",
+  "retries": {
+    "runMode": 2,
+    "openMode": 0
+  },
+  "env": {
+    "API_BASE_URL": "http://localhost:8000/v1"
+  },
+  "e2e": {
+    "setupNodeEvents": "cypress/plugins/index.js",
+    "specPattern": "cypress/e2e/**/*.cy.{js,jsx,ts,tsx}"
+  }
+}

@@ -1,0 +1,802 @@
+openapi: 3.0.0
+info:
+  title: Persistence Service Internal API
+  description: API interne pour la gestion de la persistance des données (utilisateurs, projets, documents, blocs de contenu, tâches de workflow, feedback). Utilisée par tous les services backend nécessitant un accès à la base de données.
+  version: 1.0.0
+servers:
+  - url: http://persistence-service-service:80 # URL interne du service Kubernetes
+    description: Environnement Kubernetes interne
+paths:
+  /internal/users:
+    post:
+      summary: Créer un nouvel utilisateur (interne)
+      operationId: createInternalUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateInternal'
+      responses:
+        '201':
+          description: Utilisateur créé avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponseInternal'
+        '400':
+          description: Données d'entrée invalides
+  /internal/users/{userId}:
+    get:
+      summary: Obtenir les détails d'un utilisateur par ID
+      operationId: getUserById
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: ID de l'utilisateur
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Détails de l'utilisateur
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponseInternal'
+        '404':
+          description: Utilisateur non trouvé
+  /internal/projects:
+    post:
+      summary: Créer un nouveau projet
+      operationId: createProjectInternal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreateInternal'
+      responses:
+        '201':
+          description: Projet créé avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponseInternal'
+        '400':
+          description: Données d'entrée invalides
+  /internal/projects/{projectId}:
+    get:
+      summary: Obtenir les détails d'un projet par ID
+      operationId: getProjectById
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: ID du projet
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Détails du projet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponseInternal'
+        '404':
+          description: Projet non trouvé
+    put:
+      summary: Mettre à jour un projet existant
+      operationId: updateProjectInternal
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: ID du projet
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectUpdateInternal'
+      responses:
+        '200':
+          description: Projet mis à jour avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponseInternal'
+        '400':
+          description: Données d'entrée invalides
+        '404':
+          description: Projet non trouvé
+  /internal/documents:
+    post:
+      summary: Créer un nouveau document (associé à un projet)
+      operationId: createDocumentInternal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentCreateInternal'
+      responses:
+        '201':
+          description: Document créé avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentResponseInternal'
+        '400':
+          description: Données d'entrée invalides
+  /internal/document-versions:
+    post:
+      summary: Créer une nouvelle version de document
+      operationId: createDocumentVersionInternal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentVersionCreateInternal'
+      responses:
+        '201':
+          description: Version de document créée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentVersionResponseInternal'
+        '400':
+          description: Données d'entrée invalides
+  /internal/document-versions/{versionId}:
+    get:
+      summary: Obtenir les détails d'une version de document
+      operationId: getDocumentVersionById
+      parameters:
+        - name: versionId
+          in: path
+          required: true
+          description: ID de la version du document
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Détails de la version du document
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentVersionResponseInternal'
+        '404':
+          description: Version de document non trouvée
+  /internal/content-blocks:
+    post:
+      summary: Créer un nouveau bloc de contenu
+      operationId: createContentBlockInternal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentBlockCreateInternal'
+      responses:
+        '201':
+          description: Bloc de contenu créé avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentBlockResponseInternal'
+        '400':
+          description: Données d'entrée invalides
+  /internal/content-blocks/{blockId}:
+    get:
+      summary: Obtenir un bloc de contenu par ID
+      operationId: getContentBlockById
+      parameters:
+        - name: blockId
+          in: path
+          required: true
+          description: ID du bloc de contenu
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Détails du bloc de contenu
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentBlockResponseInternal'
+        '404':
+          description: Bloc de contenu non trouvé
+    put:
+      summary: Mettre à jour un bloc de contenu existant
+      operationId: updateContentBlockInternal
+      parameters:
+        - name: blockId
+          in: path
+          required: true
+          description: ID du bloc de contenu
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentBlockUpdateInternal'
+      responses:
+        '200':
+          description: Bloc de contenu mis à jour avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentBlockResponseInternal'
+        '400':
+          description: Données d'entrée invalides
+        '404':
+          description: Bloc de contenu non trouvé
+  /internal/exercises:
+    post:
+      summary: Créer un nouvel exercice
+      operationId: createExerciseInternal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExerciseCreateInternal'
+      responses:
+        '201':
+          description: Exercice créé avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExerciseResponseInternal'
+        '400':
+          description: Données d'entrée invalides
+  /internal/exercises/{exerciseId}:
+    get:
+      summary: Obtenir un exercice par ID
+      operationId: getExerciseById
+      parameters:
+        - name: exerciseId
+          in: path
+          required: true
+          description: ID de l'exercice
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Détails de l'exercice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExerciseResponseInternal'
+        '404':
+          description: Exercice non trouvé
+  /internal/workflow-tasks:
+    get:
+      summary: Obtenir la liste des tâches de workflow
+      operationId: listWorkflowTasks
+      parameters:
+        - name: projectId
+          in: query
+          required: false
+          description: Filtrer par ID de projet
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          required: false
+          description: Filtrer par statut de tâche (ex: pending, in_progress, completed)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Liste des tâches de workflow
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkflowTaskResponseInternal'
+  /internal/user-feedback:
+    post:
+      summary: Enregistrer un feedback utilisateur
+      operationId: createUserFeedbackInternal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserFeedbackCreateInternal'
+      responses:
+        '201':
+          description: Feedback enregistré avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserFeedbackResponseInternal'
+        '400':
+          description: Données d'entrée invalides
+components:
+  schemas:
+    UserCreateInternal:
+      type: object
+      required:
+        - username
+        - password_hash
+      properties:
+        username:
+          type: string
+        password_hash:
+          type: string
+        is_active:
+          type: boolean
+          default: true
+        role:
+          type: string
+          default: user
+    UserResponseInternal:
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        is_active:
+          type: boolean
+        role:
+          type: string
+    ProjectCreateInternal:
+      type: object
+      required:
+        - user_id
+        - title
+        - subject
+        - level
+        - style
+        - mode
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        subject:
+          type: string
+        level:
+          type: string
+        style:
+          type: string
+        mode:
+          type: string
+        status:
+          type: string
+          default: draft
+    ProjectUpdateInternal:
+      type: object
+      properties:
+        title:
+          type: string
+        subject:
+          type: string
+        level:
+          type: string
+        style:
+          type: string
+        mode:
+          type: string
+        status:
+          type: string
+        current_step:
+          type: string
+          nullable: true
+    ProjectResponseInternal:
+      type: object
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        subject:
+          type: string
+        level:
+          type: string
+        style:
+          type: string
+        mode:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+        current_step:
+          type: string
+          nullable: true
+    DocumentCreateInternal:
+      type: object
+      required:
+        - project_id
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        current_version_id:
+          type: string
+          format: uuid
+          nullable: true
+    DocumentResponseInternal:
+      type: object
+      properties:
+        document_id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        current_version_id:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    DocumentVersionCreateInternal:
+      type: object
+      required:
+        - document_id
+        - version_number
+        - content_structure
+      properties:
+        document_id:
+          type: string
+          format: uuid
+        version_number:
+          type: integer
+        status:
+          type: string
+          default: draft
+        content_structure:
+          type: object
+          description: Représentation JSON de la structure du document
+          additionalProperties: true
+    DocumentVersionResponseInternal:
+      type: object
+      properties:
+        version_id:
+          type: string
+          format: uuid
+        document_id:
+          type: string
+          format: uuid
+        version_number:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+        content_structure:
+          type: object
+          additionalProperties: true
+    ContentBlockCreateInternal:
+      type: object
+      required:
+        - version_id
+        - block_type
+        - content_latex
+      properties:
+        version_id:
+          type: string
+          format: uuid
+        block_type:
+          type: string
+        content_latex:
+          type: string
+        content_html:
+          type: string
+          nullable: true
+        source_llm:
+          type: string
+          nullable: true
+        generation_params:
+          type: object
+          nullable: true
+          additionalProperties: true
+        qc_report:
+          $ref: '#/components/schemas/QCReport'
+          nullable: true
+        status:
+          type: string
+          default: draft
+        refinement_attempts:
+          type: integer
+          default: 0
+    ContentBlockUpdateInternal:
+      type: object
+      properties:
+        block_type:
+          type: string
+        content_latex:
+          type: string
+        content_html:
+          type: string
+          nullable: true
+        source_llm:
+          type: string
+          nullable: true
+        generation_params:
+          type: object
+          nullable: true
+          additionalProperties: true
+        qc_report:
+          $ref: '#/components/schemas/QCReport'
+          nullable: true
+        status:
+          type: string
+        refinement_attempts:
+          type: integer
+        error_message:
+          type: string
+          nullable: true
+    ContentBlockResponseInternal:
+      type: object
+      properties:
+        block_id:
+          type: string
+          format: uuid
+        version_id:
+          type: string
+          format: uuid
+        block_type:
+          type: string
+        content_latex:
+          type: string
+        content_html:
+          type: string
+          nullable: true
+        source_llm:
+          type: string
+          nullable: true
+        generation_params:
+          type: object
+          nullable: true
+          additionalProperties: true
+        qc_report:
+          $ref: '#/components/schemas/QCReport'
+          nullable: true
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        refinement_attempts:
+          type: integer
+        error_message:
+          type: string
+          nullable: true
+    ExerciseCreateInternal:
+      type: object
+      required:
+        - version_id
+        - prompt_latex
+      properties:
+        version_id:
+          type: string
+          format: uuid
+        block_id:
+          type: string
+          format: uuid
+          nullable: true
+        prompt_latex:
+          type: string
+        solution_latex:
+          type: string
+          nullable: true
+        difficulty:
+          type: string
+        exercise_type:
+          type: string
+        source_llm:
+          type: string
+          nullable: true
+        qc_report:
+          $ref: '#/components/schemas/QCReport'
+          nullable: true
+        status:
+          type: string
+          default: draft
+    ExerciseResponseInternal:
+      type: object
+      properties:
+        exercise_id:
+          type: string
+          format: uuid
+        version_id:
+          type: string
+          format: uuid
+        block_id:
+          type: string
+          format: uuid
+          nullable: true
+        prompt_latex:
+          type: string
+        solution_latex:
+          type: string
+          nullable: true
+        difficulty:
+          type: string
+        exercise_type:
+          type: string
+        source_llm:
+          type: string
+          nullable: true
+        qc_report:
+          $ref: '#/components/schemas/QCReport'
+          nullable: true
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    WorkflowTaskResponseInternal:
+      type: object
+      properties:
+        task_id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        task_type:
+          type: string
+        status:
+          type: string
+        parameters:
+          type: object
+          additionalProperties: true
+        celery_task_id:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        error_message:
+          type: string
+          nullable: true
+    UserFeedbackCreateInternal:
+      type: object
+      required:
+        - block_id
+        - user_id
+        - feedback_text
+        - feedback_type
+      properties:
+        block_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        feedback_text:
+          type: string
+        feedback_type:
+          type: string
+        location:
+          type: object
+          nullable: true
+          additionalProperties: true
+        status:
+          type: string
+          default: pending
+    UserFeedbackResponseInternal:
+      type: object
+      properties:
+        feedback_id:
+          type: string
+          format: uuid
+        block_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        feedback_text:
+          type: string
+        feedback_type:
+          type: string
+        location:
+          type: object
+          nullable: true
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+    QCReport:
+      type: object
+      properties:
+        overall_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+        status:
+          type: string
+          enum: [passed, failed, partial_success]
+        problems:
+          type: array
+          items:
+            $ref: '#/components/schemas/QCProblem'
+        details:
+          type: object
+          description: Détails bruts des analyses par sous-module (math, pedago, coherence)
+          additionalProperties: true
+    QCProblem:
+      type: object
+      required:
+        - type
+        - severity
+        - description
+      properties:
+        type:
+          type: string
+          enum: [math_error, clarity_issue, style_mismatch, coherence_issue, formatting_error, pedagogic_pitfall, other]
+        severity:
+          type: string
+          enum: [critical, major, minor, warning]
+        description:
+          type: string
+        location:
+          type: object
+          description: Localisation précise du problème dans le contenu (ex: ligne, caractère, formule_id)
+          nullable: true
+        suggested_fix:
+          type: string
+          nullable: true

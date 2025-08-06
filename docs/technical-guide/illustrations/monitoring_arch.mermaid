@@ -1,0 +1,42 @@
+---
+config:
+  layout: elk
+---
+flowchart TD
+ subgraph Services_Backend["Services_Backend"]
+        P1["Métriques /metrics"]
+        SVC1["Service 1"]
+        P2["Métriques /metrics"]
+        SVC2["Service 2"]
+        DB_EXP["DB Exporter"]
+        DB["Base de Données"]
+        K8S_EXP["K8s Exporter"]
+        K8S["Cluster Kubernetes"]
+  end
+    SVC1 -- Expose --> P1
+    SVC2 -- Expose --> P2
+    DB -- Exporte --> DB_EXP
+    K8S -- Exporte --> K8S_EXP
+    P1 -- Envoie --> PR["Prometheus"]
+    P2 -- Envoie --> PR
+    DB_EXP -- Envoie --> PR
+    K8S_EXP -- Envoie --> PR
+    PR -- Visualise --> GR["Grafana"]
+    SVC1 --> note1["Note: Service 1 inclut Workflow, Génération, etc."]
+    SVC2 --> note2["Note: Service 2 inclut QC, Persistance, etc."]
+    DB --> note3["Note: Base de Données inclut PostgreSQL, Redis, etc."]
+    PR --> note4["Note: Prometheus collecte les métriques, Grafana les visualise."]
+     SVC1:::service
+     P1:::exporter
+     SVC2:::service
+     P2:::exporter
+     DB:::infrastructure
+     DB_EXP:::exporter
+     K8S:::infrastructure
+     K8S_EXP:::exporter
+     PR:::monitoringTool
+     GR:::monitoringTool
+    classDef service fill:#add8e6,stroke:#318ce7,stroke-width:2px
+    classDef exporter fill:#ffff99,stroke:#cc9900,stroke-width:2px
+    classDef monitoringTool fill:#90ee90,stroke:#32cd32,stroke-width:2px
+    classDef infrastructure fill:#d3d3d3,stroke:#333,stroke-width:2px

@@ -1,0 +1,32 @@
+# backend/qc-service/requirements.txt
+# Dépendances Python pour le microservice QC Service
+
+# Framework web asynchrone
+fastapi~=0.100.0
+
+# Serveur ASGI pour FastAPI
+uvicorn[standard]~=0.22.0
+
+# Client HTTP asynchrone pour les appels inter-services (vers KB Service, Persistence Service)
+httpx~=0.27.0
+
+# Validation des données (dépendance de FastAPI)
+pydantic~=2.0.0
+pydantic-settings~=2.0.0 # Pour la gestion des paramètres de configuration
+
+# Bibliothèque de calcul symbolique
+sympy~=1.12.0
+
+# Dépendances pour l'appel à Z3 (si utilisé via python-z3 ou un wrapper)
+# z3-solver~=4.12.0 # Si vous utilisez le binding Python pour Z3
+
+# Dépendances pour le parsing LaTeX (si une bibliothèque Python est utilisée)
+# Par exemple: latex2sympy (peut nécessiter une installation plus complexe)
+
+# Dépendances pour NLP/analyse pédagogique (si des bibliothèques Python sont utilisées)
+# spacy~=3.0.0
+# textstat~=0.7.0 # Pour les métriques de lisibilité
+
+# Dépendances partagées (ne sont pas installées directement via requirements.txt ici,
+# mais sont copiées dans l'image Docker et importées comme modules locaux)
+# shared (config, models, exceptions, utils)

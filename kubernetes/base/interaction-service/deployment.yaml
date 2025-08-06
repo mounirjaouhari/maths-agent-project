@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: interaction-service-deployment # Nom du déploiement Kubernetes
+  labels:
+    app: interaction-service # Labels pour identifier le déploiement
+spec:
+  replicas: 2 # Nombre d'instances (pods) du Interaction Service à maintenir en cours d'exécution
+  selector:
+    matchLabels:
+      app: interaction-service # Sélecteur pour les pods gérés par ce déploiement
+  template:
+    metadata:
+      labels:
+        app: interaction-service # Labels pour les pods
+    spec:
+      containers:
+      - name: interaction-service # Nom du conteneur
+        image: your-docker-registry.com/math-agent/interaction-service:latest # Remplacez par l'image Docker de votre Interaction Service
+        ports:
+        - containerPort: 8000 # Le port sur lequel l'application FastAPI écoute
+        resources:
+          requests: # Ressources minimales requises par le conteneur
+            cpu: "200m" # 200 milliCPU
+            memory: "512Mi" # 512 Mégaoctets
+          limits: # Limites maximales de ressources que le conteneur peut utiliser
+            cpu: "1000m" # 1000 milliCPU (1 CPU complet)
+            memory: "2048Mi" # 2048 Mégaoctets (2 Go)
+        livenessProbe: # Sonde de vivacité: vérifie si l'application est toujours en cours d'exécution
+          httpGet:
+            path: /health # Endpoint de santé du Interaction Service
+            port: 8000
+          initialDelaySeconds: 20 # Délai avant la première vérification
+          periodSeconds: 10 # Fréquence des vérifications
+        readinessProbe: # Sonde de préparation: vérifie si l'application est prête à recevoir du trafic
+          httpGet:
+            path: /ready # Endpoint de préparation du Interaction Service
+            port: 8000
+          initialDelaySeconds: 25 # Délai avant la première vérification
+          periodSeconds: 10 # Fréquence des vérifications
+        env: # Variables d'environnement pour le conteneur
+        - name: GENERATION_SERVICE_URL # URL du service de génération
+          value: http://generation-service-service:80 # Communication interne via le nom du service Kubernetes
+        - name: KB_SERVICE_URL # URL du service de base de connaissances
+          value: http://kb-service-service:80 # Communication interne via le nom du service Kubernetes
+        # Ajoutez d'autres variables d'environnement nécessaires ici

@@ -1,0 +1,35 @@
+---
+config:
+  layout: elk
+---
+flowchart TD
+    A["Utilisateur<br>Saisit LaTeX"] -- Saisit --> B["Éditeur Frontend<br>TipTap"]
+    B -- Transmet --> C["Plugin TipTap<br>Détection LaTeX"]
+    C -- Code Modifié --> D["Déclenchement Rendu<br>avec Debounce"]
+    D -- Rend --> E["KaTeX<br>Bibliothèque LaTeX"]
+    E -- Sortie HTML/CSS --> F["Plugin TipTap<br>Affichage Rendu"]
+    F -- Met à jour --> G["Vue Éditeur<br>Remplacement Visuel"]
+    G -- Affiche --> B
+    C -- Met à jour --> H["Modèle de Données<br>TipTap State"]
+    H -- Fournit --> C
+    G -- "Double-clic" --> I["Interaction Utilisateur"]
+    I -- Affiche --> J["Zone Édition<br>Code Source"]
+    J -- Modifie --> A
+    E --> note1@{ label: "Note: KaTeX rend le LaTeX en HTML/CSS pour affichage dans l'éditeur." }
+    J --> note2@{ label: "Note: La zone d'édition s'ouvre pour modifier le code LaTeX brut." }
+    note1@{ shape: rect}
+    note2@{ shape: rect}
+     A:::ui
+     B:::ui
+     C:::process
+     D:::process
+     E:::external
+     F:::process
+     G:::ui
+     H:::data
+     I:::ui
+     J:::ui
+    classDef process fill:#90ee90,stroke:#32cd32,stroke-width:2px
+    classDef data fill:#ffebcd,stroke:#ffb347,stroke-width:2px
+    classDef external fill:#e0e0e0,stroke:#333,stroke-dasharray: 5 5
+    classDef ui fill:#add8e6,stroke:#318ce7,stroke-width:2px

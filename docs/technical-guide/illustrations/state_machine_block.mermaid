@@ -1,0 +1,52 @@
+stateDiagram-v2
+    direction LR
+    %% États principaux
+    state "Pending Generation" as pending_generation <<start>>
+    state "Generation In Progress" as generation_in_progress
+    state "Generation Failed" as generation_failed
+    state "QC Pending" as qc_pending
+    state "QC In Progress" as qc_in_progress
+    state "QC Failed" as qc_failed
+    state "QC Passed" as qc_passed
+    state "Refinement Pending" as refinement_pending
+    state "Refinement In Progress" as refinement_in_progress
+    state "Refinement Failed" as refinement_failed
+    state "Pending Validation" as pending_validation
+    state "Validated" as validated
+    state "Archived" as archived <<end>>
+    state "Critical Error" as critical_error
+
+    %% Transitions Génération
+    pending_generation --> generation_in_progress : Tâche Génération Démarrée
+    generation_in_progress --> qc_pending : Génération Réussie
+    generation_in_progress --> generation_failed : Génération Échouée
+    generation_failed --> archived : Archivé (Échec Génération)
+
+    %% Transitions QC
+    qc_pending --> qc_in_progress : QC Démarré
+    qc_in_progress --> qc_passed : QC OK (Rapport conforme)
+    qc_in_progress --> qc_failed : QC KO (Rapport à revoir)
+    qc_failed --> refinement_pending : Raffinement Nécessaire
+
+    %% Transitions Validation
+    qc_passed --> pending_validation : QC OK (Mode Supervisé)
+    qc_passed --> validated : QC OK (Mode Autonome)
+    pending_validation --> validated : Validation Utilisateur
+    pending_validation --> refinement_pending : Refaire (Utilisateur)
+
+    %% Transitions Raffinement
+    refinement_pending --> refinement_in_progress : Raffinement Lancé
+    refinement_in_progress --> qc_pending : Raffinement OK (Nouveau Bloc)
+    refinement_in_progress --> refinement_failed : Raffinement Échoué
+    refinement_failed --> archived : Archivé (Échec Raffinement)
+
+    %% Fin de traitement
+    validated --> archived : Nouvelle Version Créée
+
+    %% Gestion Erreurs Critiques
+    generation_in_progress --> critical_error : Erreur Critique
+    qc_in_progress --> critical_error : Erreur Critique
+    refinement_in_progress --> critical_error : Erreur Critique
+    critical_error --> archived : Archivé (Erreur Critique)
+    %% Note: Certaines transitions peuvent être conditionnelles au mode (Supervisé/Autonome)
+    %% comme décrit dans le texte.

@@ -1,0 +1,289 @@
+# Fichier placeholder pour workflow-internal.yaml
+openapi: 3.0.0
+info:
+  title: Workflow Service Internal API
+  description: API interne pour la communication avec le Moteur de Workflow. Utilisée par les workers Celery et d'autres services backend pour mettre à jour l'état du workflow et rapporter les résultats.
+  version: 1.0.0
+servers:
+  - url: http://workflow-service-service:80 # URL interne du service Kubernetes
+    description: Environnement Kubernetes interne
+paths:
+  /internal/projects/{projectId}/status:
+    put:
+      summary: Mettre à jour le statut d'un projet
+      operationId: updateProjectStatus
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: ID du projet
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [draft, in_progress, completed, archived, error]
+                  description: Nouveau statut du projet
+                current_step:
+                  type: string
+                  nullable: true
+                  description: Étape actuelle du protocole (pour mode Supervisé)
+      responses:
+        '200':
+          description: Statut du projet mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectInternalResponse'
+        '400':
+          description: Données d'entrée invalides
+        '404':
+          description: Projet non trouvé
+  /internal/content-blocks/{blockId}/status:
+    put:
+      summary: Mettre à jour le statut d'un bloc de contenu
+      operationId: updateContentBlockStatus
+      parameters:
+        - name: blockId
+          in: path
+          required: true
+          description: ID du bloc de contenu
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [draft, qc_pending, qc_failed, validated, needs_refinement, generation_failed, refinement_failed, archived]
+                  description: Nouveau statut du bloc de contenu
+                qc_report:
+                  $ref: '#/components/schemas/QCReport'
+                  nullable: true
+                  description: Rapport QC associé à la mise à jour de statut
+                refinement_attempts:
+                  type: integer
+                  nullable: true
+                  description: Nombre de tentatives de raffinement effectuées
+                error_message:
+                  type: string
+                  nullable: true
+                  description: Message d'erreur si le statut est 'failed'
+      responses:
+        '200':
+          description: Statut du bloc de contenu mis à jour
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentBlockInternalResponse'
+        '400':
+          description: Données d'entrée invalides
+        '404':
+          description: Bloc de contenu non trouvé
+  /internal/workflow-tasks:
+    post:
+      summary: Créer une nouvelle tâche de workflow
+      operationId: createWorkflowTask
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowTaskCreate'
+      responses:
+        '201':
+          description: Tâche de workflow créée avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowTaskResponse'
+        '400':
+          description: Données d'entrée invalides
+  /internal/workflow-tasks/{taskId}/complete:
+    post:
+      summary: Marquer une tâche de workflow comme terminée
+      operationId: completeWorkflowTask
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          description: ID de la tâche de workflow
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                success:
+                  type: boolean
+                  description: Indique si la tâche s'est terminée avec succès
+                  default: true
+                result:
+                  type: object
+                  nullable: true
+                  description: Résultat de la tâche (ex: ID du bloc généré, rapport QC)
+                  additionalProperties: true
+                error_message:
+                  type: string
+                  nullable: true
+                  description: Message d'erreur si la tâche a échoué
+      responses:
+        '200':
+          description: Tâche de workflow mise à jour
+        '400':
+          description: Données d'entrée invalides
+        '404':
+          description: Tâche de workflow non trouvée
+components:
+  schemas:
+    ProjectInternalResponse:
+      type: object
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        current_step:
+          type: string
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+    ContentBlockInternalResponse:
+      type: object
+      properties:
+        block_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        qc_report:
+          $ref: '#/components/schemas/QCReport'
+          nullable: true
+        refinement_attempts:
+          type: integer
+          nullable: true
+        error_message:
+          type: string
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+    WorkflowTaskCreate:
+      type: object
+      required:
+        - project_id
+        - task_type
+        - parameters
+      properties:
+        project_id:
+          type: string
+          format: uuid
+        task_type:
+          type: string
+          enum: [generate_block, run_qc, refine_block, assemble_document, export_document]
+        parameters:
+          type: object
+          description: Paramètres spécifiques à la tâche
+          additionalProperties: true
+        celery_task_id:
+          type: string
+          nullable: true
+          description: ID de la tâche Celery associée
+    WorkflowTaskResponse:
+      type: object
+      properties:
+        task_id:
+          type: string
+          format: uuid
+        project_id:
+          type: string
+          format: uuid
+        task_type:
+          type: string
+        status:
+          type: string
+        parameters:
+          type: object
+        celery_task_id:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        error_message:
+          type: string
+          nullable: true
+    QCReport:
+      type: object
+      properties:
+        overall_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+        status:
+          type: string
+          enum: [passed, failed, partial_success]
+        problems:
+          type: array
+          items:
+            $ref: '#/components/schemas/QCProblem'
+        details:
+          type: object
+          description: Détails bruts des analyses par sous-module (math, pedago, coherence)
+          additionalProperties: true
+    QCProblem:
+      type: object
+      required:
+        - type
+        - severity
+        - description
+      properties:
+        type:
+          type: string
+          enum: [math_error, clarity_issue, style_mismatch, coherence_issue, formatting_error, pedagogic_pitfall, other]
+        severity:
+          type: string
+          enum: [critical, major, minor, warning]
+        description:
+          type: string
+        location:
+          type: object
+          description: Localisation précise du problème dans le contenu (ex: ligne, caractère, formule_id)
+          nullable: true
+        suggested_fix:
+          type: string
+          nullable: true

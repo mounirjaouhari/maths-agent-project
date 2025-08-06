@@ -1,0 +1,33 @@
+---
+config:
+  layout: elk
+---
+flowchart TD
+    A["Métriques"] -- Évalue --> B["Règles Alertes Prometheus"]
+    C["Logs Centralisés"] -- Évalue --> D["Règles Alertes Grafana/Kibana"]
+    B -- Déclenche --> E["Alertmanager"]
+    D -- Déclenche --> E
+    E -- Notifie --> F["PagerDuty/Opsgenie"] & G["Slack/Teams"] & H["Email"]
+    F -- Alerte --> I["Équipe Opérations"]
+    G -- Informe --> J["Équipe Développement"]
+    H -- Informe --> K["Parties Prenantes"]
+    A --> note1["Note: Métriques issues de Prometheus."]
+    C --> note2["Note: Logs issus des stacks ELK ou Prometheus, Loki, Grafana: PLG."]
+    E --> note3["Note: Alertmanager envoie des notifications via plusieurs canaux."]
+    F --> note4["Note: PagerDuty, Opsgenie pour intervention immédiate; Slack, Teams pour devs; Email pour parties prenantes."]
+     A:::data
+     B:::alertingRule
+     C:::data
+     D:::alertingRule
+     E:::alertingTool
+     F:::notificationChannel
+     G:::notificationChannel
+     H:::notificationChannel
+     I:::team
+     J:::team
+     K:::team
+    classDef data fill:#ffebcd,stroke:#ffb347,stroke-width:2px
+    classDef alertingRule fill:#ffff99,stroke:#cc9900,stroke-width:2px
+    classDef alertingTool fill:#90ee90,stroke:#32cd32,stroke-width:2px
+    classDef notificationChannel fill:#add8e6,stroke:#318ce7,stroke-width:2px
+    classDef team fill:#e6d6f9,stroke:#7b68ee,stroke-width:2px

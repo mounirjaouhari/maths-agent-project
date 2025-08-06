@@ -1,0 +1,19 @@
+graph TD
+    A[Contenu LaTeX Généré] --> B[Parsing LaTeX]
+    B --> C[Arbre Syntaxique Abstrait - AST]
+    C --> D[Traduction vers Format Outil Externe]
+    D --> E[Outil Externe 1 - SymPy / Z3 / Wolfram Alpha]
+    D --> F[Outil Externe 2 - Prover Formel]
+    E -- Résultat Vérification --> G[Interprétation Résultat Outil]
+    F -- Résultat Vérification --> G
+    G --> H[Attribution Score de Confiance Mathématique]
+    H --> I[Partie du Rapport QC]
+
+    %% Styles
+    classDef process fill:#90ee90,stroke:#32cd32,stroke-width:2px
+    classDef data fill:#ffebcd,stroke:#ffb347,stroke-width:2px
+    classDef external fill:#f9f,stroke:#333,stroke-width:2px
+    
+    class B,D,G,H process
+    class A,C,I data
+    class E,F external

@@ -1,0 +1,34 @@
+graph TD
+    A[Requête de Génération - Type, Niveau, Style, Contexte] --> B[Logique de Sélection LLM]
+    B --> C[Critère 1 : Type de Tâche / Contenu]
+    B --> D[Critère 2 : Niveau & Style]
+    B --> E[Critère 3 : Performance Mesurée - Benchmarks Internes]
+    B --> F[Critère 4 : Coût Estimé]
+    B --> G[Critère 5 : Latence Estimée]
+    B --> H[Critère 6 : Disponibilité Actuelle]
+    B --> I[Critère 7 : Contraintes Spécifiques Prompt]
+    C --> J[Algorithme de Sélection - Évaluation Pondérée]
+    D --> J
+    E --> J
+    F --> J
+    G --> J
+    H --> J
+    I --> J
+    J --> K[Liste des LLMs Disponibles - Configuration]
+    J --> L[Résultats Benchmarks - Stockés]
+    K --> J
+    L --> J
+    J --> M[LLM Sélectionné]
+    M --> N[Appel API LLM]
+
+    %% Styles
+    classDef process fill:#90ee90,stroke:#32cd32,stroke-width:2px
+    classDef data fill:#ffebcd,stroke:#ffb347,stroke-width:2px
+    classDef decision fill:#add8e6,stroke:#318ce7,stroke-width:2px
+    classDef external fill:#f9f,stroke:#333,stroke-width:2px
+    
+    class B,J process
+    class C,D,E,F,G,H,I,K,L data
+    class M,N external
+    style K fill:#e6e6fa,stroke:#9370db,stroke-width:2px
+    style L fill:#e6e6fa,stroke:#9370db,stroke-width:2px

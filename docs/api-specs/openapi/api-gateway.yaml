@@ -1,0 +1,539 @@
+openapi: 3.0.0
+info:
+  title: API Gateway - Agent IA de Rédaction Mathématique
+  description: API publique pour interagir avec l'Agent IA de Rédaction Mathématique. Gère l'authentification, la gestion des projets et le déclenchement des workflows.
+  version: 1.0.0
+servers:
+  - url: https://api.your-domain.com/v1 # URL de base de l'API en production
+    description: Environnement de Production
+  - url: https://api.staging.your-domain.com/v1 # URL de base de l'API en staging
+    description: Environnement de Staging
+paths:
+  /users/register:
+    post:
+      summary: Enregistrer un nouvel utilisateur
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegister'
+      responses:
+        '201':
+          description: Utilisateur enregistré avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Données d'entrée invalides
+        '409':
+          description: Nom d'utilisateur déjà existant
+  /users/login:
+    post:
+      summary: Connecter un utilisateur et obtenir un jeton JWT
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserLogin'
+      responses:
+        '200':
+          description: Connexion réussie, retourne un jeton JWT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Identifiants invalides
+  /projects:
+    post:
+      summary: Créer un nouveau projet de rédaction mathématique
+      operationId: createProject
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreate'
+      responses:
+        '201':
+          description: Projet créé avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+        '400':
+          description: Données d'entrée invalides
+        '401':
+          description: Non authentifié
+    get:
+      summary: Obtenir la liste des projets de l'utilisateur
+      operationId: listProjects
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          description: Filtrer par statut du projet (ex: draft, in_progress, completed)
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Liste des projets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProjectResponse'
+        '401':
+          description: Non authentifié
+  /projects/{projectId}:
+    get:
+      summary: Obtenir les détails d'un projet spécifique
+      operationId: getProject
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: ID du projet
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Détails du projet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectDetailResponse'
+        '401':
+          description: Non authentifié
+        '403':
+          description: Accès non autorisé
+        '404':
+          description: Projet non trouvé
+    put:
+      summary: Mettre à jour un projet existant
+      operationId: updateProject
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: ID du projet
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectUpdate'
+      responses:
+        '200':
+          description: Projet mis à jour avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse'
+        '400':
+          description: Données d'entrée invalides
+        '401':
+          description: Non authentifié
+        '403':
+          description: Accès non autorisé
+        '404':
+          description: Projet non trouvé
+    delete:
+      summary: Supprimer un projet
+      operationId: deleteProject
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: ID du projet
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Projet supprimé avec succès
+        '401':
+          description: Non authentifié
+        '403':
+          description: Accès non autorisé
+        '404':
+          description: Projet non trouvé
+  /projects/{projectId}/signal:
+    post:
+      summary: Envoyer un signal utilisateur au moteur de workflow (mode Supervisé)
+      operationId: sendWorkflowSignal
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: projectId
+          in: path
+          required: true
+          description: ID du projet
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowSignal'
+      responses:
+        '200':
+          description: Signal traité avec succès
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectResponse' # Retourne l'état mis à jour du projet
+        '400':
+          description: Signal invalide pour l'état actuel du projet
+        '401':
+          description: Non authentifié
+        '403':
+          description: Accès non autorisé
+        '404':
+          description: Projet non trouvé
+  /content-blocks/{blockId}/qc-report:
+    get:
+      summary: Obtenir le rapport QC détaillé pour un bloc de contenu
+      operationId: getQcReportForBlock
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: blockId
+          in: path
+          required: true
+          description: ID du bloc de contenu
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Rapport QC détaillé
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QCReport'
+        '401':
+          description: Non authentifié
+        '403':
+          description: Accès non autorisé (si l'utilisateur n'est pas propriétaire du projet)
+        '404':
+          description: Bloc de contenu non trouvé
+  /exports/{exportId}/download:
+    get:
+      summary: Télécharger un document exporté
+      operationId: downloadExportedDocument
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: exportId
+          in: path
+          required: true
+          description: ID de l'exportation (ou du document si l'exportation est directe)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Fichier du document exporté
+          content:
+            application/octet-stream: # Type MIME pour un fichier binaire
+              schema:
+                type: string
+                format: binary
+        '401':
+          description: Non authentifié
+        '403':
+          description: Accès non autorisé
+        '404':
+          description: Exportation non trouvée ou fichier non disponible
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT # Indique que le jeton est un JWT
+  schemas:
+    UserRegister:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: securepassword123
+    UserLogin:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          example: user@example.com
+        password:
+          type: string
+          format: password
+          example: securepassword123
+    LoginResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        token_type:
+          type: string
+          example: bearer
+    UserResponse:
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        username:
+          type: string
+          example: user@example.com
+        created_at:
+          type: string
+          format: date-time
+        is_active:
+          type: boolean
+        role:
+          type: string
+    ProjectCreate:
+      type: object
+      required:
+        - title
+        - subject
+        - level
+        - style
+        - mode
+      properties:
+        title:
+          type: string
+          example: "Introduction à l'Algèbre Linéaire"
+        subject:
+          type: string
+          example: "Algèbre Linéaire"
+        level:
+          type: string
+          enum: [L1, L2, M1, M2, Lycée]
+          example: L2
+        style:
+          type: string
+          enum: [Bourbaki, Feynman, Hybride]
+          example: Hybride
+        mode:
+          type: string
+          enum: [Supervisé, Autonome]
+          example: Supervisé
+    ProjectUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        subject:
+          type: string
+        level:
+          type: string
+          enum: [L1, L2, M1, M2, Lycée]
+        style:
+          type: string
+          enum: [Bourbaki, Feynman, Hybride]
+        mode:
+          type: string
+          enum: [Supervisé, Autonome]
+        status:
+          type: string
+          enum: [draft, in_progress, completed, archived]
+    ProjectResponse:
+      type: object
+      properties:
+        project_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174001
+        user_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        subject:
+          type: string
+        level:
+          type: string
+        style:
+          type: string
+        mode:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+    ProjectDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/ProjectResponse'
+        - type: object
+          properties:
+            document_structure: # Représentation de l'arborescence du document
+              type: object # Ou array, selon la structure exacte
+              description: Structure hiérarchique du document (chapitres, sections, blocs)
+              example:
+                chapter1:
+                  title: "Chapitre 1: Espaces Vectoriels"
+                  sections:
+                    - section_id: "sec-1-1"
+                      title: "Définitions Fondamentales"
+                      blocks:
+                        - block_id: "block-1-1-1"
+                          type: "definition"
+                          status: "validated"
+                          qc_score: 95
+                        - block_id: "block-1-1-2"
+                          type: "intuition"
+                          status: "qc_pending"
+            content_blocks: # Liste des blocs de contenu détaillés
+              type: array
+              items:
+                $ref: '#/components/schemas/ContentBlockResponse'
+    ContentBlockResponse:
+      type: object
+      properties:
+        block_id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174002
+        version_id:
+          type: string
+          format: uuid
+        block_type:
+          type: string
+          enum: [definition, intuition, proof_skeleton, exercise, text, image]
+        content_latex:
+          type: string
+          description: Contenu du bloc en format LaTeX
+        content_html:
+          type: string
+          nullable: true
+          description: Contenu du bloc en format HTML (pour affichage UI)
+        status:
+          type: string
+          enum: [draft, qc_pending, qc_failed, validated, needs_refinement, generation_failed, refinement_failed]
+        qc_report:
+          $ref: '#/components/schemas/QCReport'
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    WorkflowSignal:
+      type: object
+      required:
+        - signal_type
+      properties:
+        signal_type:
+          type: string
+          description: Type de signal (ex: VALIDATED, REDO, ADD_ELEMENT)
+          enum: [VALIDATED, REDO, ADD_ELEMENT, QC_OK, PROBLEM_DETECTED, ALL_APPROVED, CANCEL_PROJECT]
+        block_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: ID du bloc de contenu concerné par le signal (si applicable)
+        feedback:
+          type: object
+          nullable: true
+          description: Détails du feedback utilisateur pour les signaux REDO
+          properties:
+            text:
+              type: string
+              example: "Cette formule est incorrecte, veuillez corriger."
+            location:
+              type: object
+              description: Informations de localisation du feedback (ex: ligne, caractère)
+              nullable: true
+    QCReport:
+      type: object
+      properties:
+        overall_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 85.5
+        status:
+          type: string
+          enum: [passed, failed, partial_success]
+          example: failed
+        problems:
+          type: array
+          items:
+            $ref: '#/components/schemas/QCProblem'
+        details:
+          type: object
+          description: Détails bruts des analyses par sous-module (math, pedago, coherence)
+          additionalProperties: true
+    QCProblem:
+      type: object
+      required:
+        - type
+        - severity
+        - description
+      properties:
+        type:
+          type: string
+          enum: [math_error, clarity_issue, style_mismatch, coherence_issue, formatting_error, pedagogic_pitfall, other]
+          example: math_error
+        severity:
+          type: string
+          enum: [critical, major, minor, warning]
+          example: critical
+        description:
+          type: string
+          example: "L'égalité $x^2+y^2=0$ n'est vraie que si $x=0$ et $y=0$, pas pour tout $x,y$."
+        location:
+          type: object
+          description: Localisation précise du problème dans le contenu (ex: ligne, caractère, formule_id)
+          nullable: true
+          example:
+            line: 10
+            char_start: 5
+            char_end: 15
+        suggested_fix:
+          type: string
+          nullable: true
+          description: Suggestion de correction (si l'IA peut la formuler)

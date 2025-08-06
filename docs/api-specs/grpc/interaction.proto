@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package interaction;
+
+// Importez les types de données nécessaires
+// import "google/protobuf/timestamp.proto";
+// import "google/protobuf/wrappers.proto";
+
+// Service d'Interaction et de Raffinement
+service InteractionService {
+  // Raffine un contenu existant basé sur un feedback (utilisateur ou QC)
+  rpc RefineContent (RefineContentRequest) returns (RefineContentResponse);
+}
+
+// Message de requête pour RefineContent
+message RefineContentRequest {
+  string content_latex = 1; // Le contenu original à raffiner en LaTeX
+  Feedback feedback = 2; // Dictionnaire décrivant le feedback (utilisateur ou QC)
+  string block_type = 3; // Type du bloc de contenu
+  string level = 4; // Niveau pédagogique cible
+  string style = 5; // Style rédactionnel
+  map<string, string> context = 6; // Contexte supplémentaire pour le raffinement
+}
+
+// Message pour le feedback
+message Feedback {
+  string source = 1; // Source du feedback (user, qc)
+  string details = 2; // Texte du commentaire utilisateur ou résumé du problème QC
+  Location location = 3; // Informations de localisation du feedback
+  QCReport qc_report = 4; // Rapport QC complet si la source est 'qc'
+  bool critical_errors_only = 5; // Pour le feedback QC, ne considérer que les erreurs critiques
+}
+
+// Message pour la localisation
+message Location {
+  int32 line = 1;
+  int32 char_start = 2;
+  int32 char_end = 3;
+  // Ajoutez d'autres champs de localisation si nécessaire (ex: formula_id)
+}
+
+// Message pour le rapport QC (simplifié pour gRPC, similaire à qc.proto)
+message QCReport {
+  float overall_score = 1; // Score global de 0 à 100
+  string status = 2; // Statut (passed, failed, partial_success)
+  repeated QCProblem problems = 3; // Liste des problèmes détectés
+  map<string, string> details = 4; // Détails bruts des analyses par sous-module (math, pedago, coherence)
+}
+
+// Message pour un problème QC (simplifié pour gRPC, similaire à qc.proto)
+message QCProblem {
+  string type = 1; // Type de problème (math_error, clarity_issue, etc.)
+  string severity = 2; // Sévérité (critical, major, minor, warning)
+  string description = 3; // Description du problème
+  Location location = 4; // Localisation précise du problème
+  string suggested_fix = 5; // Suggestion de correction
+}
+
+// Message de réponse pour RefineContent
+message RefineContentResponse {
+  string content_latex = 1; // Le contenu raffiné en format LaTeX
+}

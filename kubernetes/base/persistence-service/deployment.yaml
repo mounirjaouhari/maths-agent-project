@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: persistence-service-deployment # Nom du déploiement Kubernetes
+  labels:
+    app: persistence-service # Labels pour identifier le déploiement
+spec:
+  replicas: 2 # Nombre d'instances (pods) du Persistence Service à maintenir en cours d'exécution
+  selector:
+    matchLabels:
+      app: persistence-service # Sélecteur pour les pods gérés par ce déploiement
+  template:
+    metadata:
+      labels:
+        app: persistence-service # Labels pour les pods
+    spec:
+      containers:
+      - name: persistence-service # Nom du conteneur
+        image: your-docker-registry.com/math-agent/persistence-service:latest # Remplacez par l'image Docker de votre Persistence Service
+        ports:
+        - containerPort: 8000 # Le port sur lequel l'application FastAPI écoute
+        resources:
+          requests: # Ressources minimales requises par le conteneur
+            cpu: "150m" # 150 milliCPU
+            memory: "256Mi" # 256 Mégaoctets
+          limits: # Limites maximales de ressources que le conteneur peut utiliser
+            cpu: "600m" # 600 milliCPU
+            memory: "768Mi" # 768 Mégaoctets
+        livenessProbe: # Sonde de vivacité: vérifie si l'application est toujours en cours d'exécution
+          httpGet:
+            path: /health # Endpoint de santé du Persistence Service
+            port: 8000
+          initialDelaySeconds: 15 # Délai avant la première vérification
+          periodSeconds: 10 # Fréquence des vérifications
+        readinessProbe: # Sonde de préparation: vérifie si l'application est prête à recevoir du trafic
+          httpGet:
+            path: /ready # Endpoint de préparation du Persistence Service
+            port: 8000
+          initialDelaySeconds: 20 # Délai avant la première vérification
+          periodSeconds: 10 # Fréquence des vérifications
+        env: # Variables d'environnement pour le conteneur
+        - name: DATABASE_URL # URL de connexion à la base de données PostgreSQL
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets # Nom du secret Kubernetes contenant l'URL de la base de données
+              key: database_url # Clé dans le secret
+        # Ajoutez d'autres variables d'environnement nécessaires ici

@@ -1,0 +1,42 @@
+---
+config:
+  layout: elk
+---
+flowchart TD
+    A["Version Document<br>Validée"] -- Lit --> B["Service Persistance"]
+    B -- Récupère --> C["Structure Document<br>Arborescence"] & D["Contenu Blocs<br>LaTeX"] & E["Exercices Validés"]
+    C -- Fournit --> F["Service Assemblage<br>et Export"]
+    D -- Fournit --> F
+    E -- Fournit --> F
+    F -- Ajoute --> G["Préambule/Postambule"]
+    F -- Insère --> H["Commandes Structure"]
+    F -- Ordonne --> I["Concaténation Blocs"]
+    F -- Gère --> J["Inclusion Exercices"] & K["Références et Assets"]
+    G -- Produit --> L["Fichier Source<br>LaTeX .tex"]
+    H -- Produit --> L
+    I -- Produit --> L
+    J -- Produit --> L
+    K -- Produit --> L
+    L -- Stocke --> M["Stockage Temporaire"]
+    M -- Prépare --> N["Prêt pour Exportation"]
+    G --> note1["Note: Le préambule/postambule est basé sur le style et la base de connaissances."]
+    J --> note2["Note: Les exercices peuvent être inclus inline ou en annexe."]
+    B --> note3["Note: Le service persistance lit la structure, les blocs, et les exercices validés."]
+     A:::data
+     B:::service
+     C:::data
+     D:::data
+     E:::data
+     F:::process
+     G:::process
+     H:::process
+     I:::process
+     J:::process
+     K:::process
+     L:::data
+     M:::data
+     N:::output
+    classDef process fill:#90ee90,stroke:#32cd32,stroke-width:2px
+    classDef data fill:#ffebcd,stroke:#ffb347,stroke-width:2px
+    classDef service fill:#add8e6,stroke:#318ce7,stroke-width:2px
+    classDef output fill:#f0e68c,stroke:#daa520,stroke-width:2px

@@ -1,0 +1,36 @@
+graph TD
+    A[Bloc en attente<br>de raffinement] -->|Déclenche| B[Moteur Workflow<br>Tâche Raffinement]
+    B -->|Exécute| C[Tâche Celery<br>Raffinement]
+    C -->|Appelle| D[Service Raffinement]
+    D -->|Formule Instructions| E[Service Génération]
+    E -->|Retourne Contenu| D
+    D -->|Crée| F[Bloc QC en attente]
+    F -->|Déclenche| G[Moteur Workflow<br>Tâche QC]
+    G -->|Exécute| H[Tâche Celery<br>QC]
+    H -->|Appelle| I[Service QC]
+    I -->|Produit| J[Rapport QC]
+    J -->|Évalue| K[Moteur Workflow]
+    K -->|Vérifie| L{Score QC >= Seuil<br>ou Max Tentatives ?}
+    L -->|Oui: Validé| P[Bloc Validé]
+    L -->|Non: Raffiner| M{Tentatives < Max ?}
+    M -->|Oui| B
+    M -->|Non| N[Bloc Échec Raffinement]
+    N -->|Notifie| O[Notification Utilisateur]
+    P -->|Continue| Q[Traiter Bloc Suivant]
+
+    %% Notes
+    note1[Note: Le service Raffinement appelle le service Génération pour produire le contenu raffiné.]
+    D --> note1
+    note2[Note: L'ancien bloc est archivé lors de la création du nouveau bloc.]
+    F --> note2
+
+    %% Styles
+    classDef process fill:#90ee90,stroke:#32cd32,stroke-width:2px
+    classDef data fill:#ffebcd,stroke:#ffb347,stroke-width:2px
+    classDef service fill:#add8e6,stroke:#318ce7,stroke-width:2px
+    classDef decision fill:#f0e68c,stroke:#daa520,stroke-width:2px
+
+    class B,C,G,H,K process
+    class A,F,J,N,O,P,Q data
+    class D,E,I service
+    class L,M decision

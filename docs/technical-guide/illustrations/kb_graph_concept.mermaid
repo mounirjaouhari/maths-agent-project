@@ -1,0 +1,58 @@
+graph LR
+    %% Nodes (Entités)
+    C1[Concept: Espace Vectoriel]
+    C2[Concept: Base de Données]
+    C3[Concept: Dérivée]
+    C4[Concept: Intégrale]
+    T1[Théorème: Base Incomplète]
+    P1[Piège: Division par Zéro]
+    A1[Analogie: Éponge Mouillée]
+    App1[Application: Modélisation Financière]
+    Note1[Note Historique: Origine du Calcul]
+
+    %% Relationships (Relations)
+    C1 --> |REQUIERT| C2
+    C3 --> |REQUIERT| C4
+    T1 --> |UTILISE| C1
+    T1 --> |PROUVE| C1
+    C3 --> |PIÈGE| P1
+    C4 --> |ILLUSTRÉ PAR| A1
+    C3 --> |APPLICATION| App1
+    C4 --> |APPLICATION| App1
+    C3 --> |HISTORIQUE| Note1
+    C4 --> |HISTORIQUE| Note1
+    C1 -.-> |TYPE DE| C2
+
+    %% Styling
+    classDef concept fill:#a8d8ea, stroke:#3a7bd5,stroke-width:2px,color:#333;
+    classDef theorem fill:#aaf683, stroke:#60d394,stroke-width:2px,color:#333;
+    classDef pitfall fill:#ffaaa5, stroke:#ff8b94,stroke-width:2px,color:#333;
+    classDef analogy fill:#ffd3b6, stroke:#ffaaa5,stroke-width:2px,color:#333;
+    classDef application fill:#dcedc1, stroke:#a8e6cf,stroke-width:2px,color:#333;
+    classDef history fill:#f9d5e5, stroke:#eeac99,stroke-width:2px,color:#333;
+    
+    class C1,C2,C3,C4 concept;
+    class T1 theorem;
+    class P1 pitfall;
+    class A1 analogy;
+    class App1 application;
+    class Note1 history;
+
+    %% Notes explicatives
+    C1 -.- note1["Fondamental en<br>algèbre linéaire"]
+    C3 -.- note2["Calcul différentiel<br>et intégral"]
+    T1 -.- note3["Théorie de la dimension"]
+    A1 -.- note4["Visualisation de<br>l'accumulation"]
+    App1 -.- note5["Calcul de rendements<br>et risques"]
+    Note1 -.- note6["Newton vs Leibniz"]
+
+    %% Légende
+    subgraph Légende
+        direction TB
+        l1[Concept]:::concept
+        l2[Théorème]:::theorem
+        l3[Piège]:::pitfall
+        l4[Analogie]:::analogy
+        l5[Application]:::application
+        l6[Historique]:::history
+    end

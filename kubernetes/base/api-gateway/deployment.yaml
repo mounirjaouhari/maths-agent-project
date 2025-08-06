@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway-deployment # Nom du déploiement Kubernetes
+  labels:
+    app: api-gateway # Labels pour identifier le déploiement
+spec:
+  replicas: 2 # Nombre d'instances (pods) de l'API Gateway à maintenir en cours d'exécution
+  selector:
+    matchLabels:
+      app: api-gateway # Sélecteur pour les pods gérés par ce déploiement
+  template:
+    metadata:
+      labels:
+        app: api-gateway # Labels pour les pods
+    spec:
+      containers:
+      - name: api-gateway # Nom du conteneur
+        image: your-docker-registry.com/math-agent/api-gateway:latest # Remplacez par l'image Docker de votre API Gateway (ex: tag de commit ou version)
+        ports:
+        - containerPort: 8000 # Le port sur lequel l'application FastAPI écoute
+        resources:
+          requests: # Ressources minimales requises par le conteneur
+            cpu: "100m" # 100 milliCPU
+            memory: "128Mi" # 128 Mégaoctets
+          limits: # Limites maximales de ressources que le conteneur peut utiliser
+            cpu: "500m" # 500 milliCPU
+            memory: "512Mi" # 512 Mégaoctets
+        livenessProbe: # Sonde de vivacité: vérifie si l'application est toujours en cours d'exécution
+          httpGet:
+            path: /health # Endpoint de santé de l'API Gateway
+            port: 8000
+          initialDelaySeconds: 10 # Délai avant la première vérification
+          periodSeconds: 5 # Fréquence des vérifications
+        readinessProbe: # Sonde de préparation: vérifie si l'application est prête à recevoir du trafic
+          httpGet:
+            path: /ready # Endpoint de préparation de l'API Gateway
+            port: 8000
+          initialDelaySeconds: 15 # Délai avant la première vérification
+          periodSeconds: 5 # Fréquence des vérifications
+        env: # Variables d'environnement pour le conteneur
+        - name: DATABASE_URL # Exemple: URL de connexion à la base de données (à gérer via Secrets)
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets # Nom du secret Kubernetes
+              key: database_url # Clé dans le secret
+        - name: LLM_API_KEY # Exemple: Clé API pour les LLMs (à gérer via Secrets)
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: llm_api_key
+        # Ajoutez d'autres variables d'environnement nécessaires ici

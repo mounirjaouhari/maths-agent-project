@@ -1,0 +1,68 @@
+---
+config:
+  layout: elk
+---
+flowchart TD
+ subgraph s1["Stratégie_Rolling_Update"]
+        RU_B["Trafic"]
+        RU_A["V1"]
+        RU_C["V1"]
+        RU_D["V2"]
+        RU_E["Trafic"]
+        RU_F["V2"]
+  end
+ subgraph s2["Stratégie_Blue_Green"]
+        BG_B["Trafic"]
+        BG_A["Environnement Bleu: V1"]
+        BG_D["Tests"]
+        BG_C["Environnement Vert: V2"]
+        BG_E["Trafic"]
+  end
+ subgraph s3["Stratégie_Canary"]
+        CA_B["Trafic"]
+        CA_A["V1"]
+        CA_C["V2: Canary"]
+        CA_D["Tests"]
+        CA_E["Trafic Principal"]
+  end
+    RU_A -- Dirige --> RU_B
+    RU_B -- Distribue --> RU_C
+    RU_C -- Remplacé par --> RU_D
+    RU_D -- Dirige --> RU_E
+    RU_E -- Distribue --> RU_F
+    BG_A -- Dirige --> BG_B
+    BG_C -- Teste --> BG_D
+    BG_B -- Bascule --> BG_E
+    BG_E -- Dirige --> BG_C
+    CA_A -- Trafic Principal --> CA_B
+    CA_A -- Petit % Trafic --> CA_C
+    CA_C -- Surveille --> CA_D
+    CA_D -- Validé --> CA_E
+    CA_E -- Dirige --> CA_C
+    RU_D --> note1["Note: Dans Rolling Update, les instances V1 sont progressivement remplacées par V2."]
+    BG_E --> note2@{ label: "Note: Dans Blue/Green, le trafic passe de l'environnement Bleu: V1 à Vert: V2 après tests." }
+    CA_C --> note3["Note: Dans Canary, V2 reçoit un petit pourcentage de trafic pour tests avant adoption."]
+    note2@{ shape: rect}
+     RU_A:::v1
+     RU_B:::traffic
+     RU_C:::v1
+     RU_D:::v2
+     RU_E:::traffic
+     RU_F:::v2
+     BG_A:::v1
+     BG_B:::traffic
+     BG_C:::v2
+     BG_D:::tests
+     BG_E:::traffic
+     CA_B:::traffic
+     CA_C:::canary
+     CA_D:::tests
+     CA_E:::traffic
+    classDef v1 fill:#aaddff,stroke:#0088cc,stroke-width:2px
+    classDef v2 fill:#aaffaa,stroke:#008800,stroke-width:2px
+    classDef canary fill:#ffff99,stroke:#cc9900,stroke-width:2px
+    classDef traffic fill:#ffebcd,stroke:#ffb347,stroke-width:2px
+    classDef tests fill:#90ee90,stroke:#32cd32,stroke-width:2px
+    linkStyle 2 stroke-dasharray: 5 5,fill:none
+    linkStyle 7 stroke-dasharray: 5 5,fill:none
+    linkStyle 11 stroke-dasharray: 5 5,fill:none

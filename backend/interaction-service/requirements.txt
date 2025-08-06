@@ -1,0 +1,23 @@
+# backend/interaction-service/requirements.txt
+# Dépendances Python pour le microservice Interaction Service
+
+# Framework web asynchrone
+fastapi~=0.100.0
+
+# Serveur ASGI pour FastAPI
+uvicorn[standard]~=0.22.0
+
+# Client HTTP asynchrone pour les appels inter-services (vers Generation Service, KB Service)
+httpx~=0.27.0
+
+# Validation des données (dépendance de FastAPI)
+pydantic~=2.0.0
+pydantic-settings~=2.0.0 # Pour la gestion des paramètres de configuration
+
+# Dépendances pour le Traitement du Langage Naturel (NLP) si nécessaire pour l'analyse de feedback
+# spacy~=3.0.0 # Exemple de bibliothèque NLP
+# textblob~=0.17.1 # Exemple pour l'analyse de texte simple
+
+# Dépendances partagées (ne sont pas installées directement via requirements.txt ici,
+# mais sont copiées dans l'image Docker et importées comme modules locaux)
+# shared (config, models, exceptions, utils)

@@ -1,0 +1,206 @@
+# templates.yaml
+# Ce fichier contient les templates de prompts utilisés par le Service Génération (prompt_builder.py)
+# pour interagir avec les différents LLMs.
+
+# Chaque template est identifié par un 'type' de contenu et peut avoir des variations par 'style' ou 'level'.
+# Les placeholders sont indiqués par des accolades (ex: {concept_name}).
+
+prompts:
+  - type: definition
+    name: "Définition Formelle"
+    description: "Génère une définition mathématique rigoureuse et formelle."
+    default_style: Bourbaki
+    templates:
+      - style: Bourbaki
+        level: default
+        content: |
+          Tu es un assistant de rédaction de manuel de mathématiques expert, spécialisé dans la production de définitions formelles et rigoureuses, dans le style de Bourbaki.
+
+          **Instructions:**
+          1. Fournis uniquement la définition formelle du concept spécifié.
+          2. Utilise exclusivement la notation LaTeX pour toutes les expressions et symboles mathématiques.
+          3. Assure-toi que la définition est complète et sans ambiguïté pour le niveau spécifié.
+          4. Ne pas inclure d'explications intuitives, d'exemples, de commentaires ou de texte introductif/conclusif.
+          5. Commence ta réponse directement par le code LaTeX de la définition.
+
+          **Concept à définir:** {concept_name}
+          **Niveau de rigueur (correspondant au niveau cible):** {level}
+          **Définition formelle de référence (issue de la KB, si disponible):**
+          {formal_definition_from_KB}
+          **Contexte:** Ce concept est introduit après {prerequisite_concepts_names}.
+
+          **Format de sortie attendu:** Code LaTeX pur.
+          Définition formelle:
+          ```latex
+          {generated_content}
+          ```
+      - style: Hybride
+        level: default
+        content: |
+          Tu es un assistant de rédaction de manuel de mathématiques, capable de fournir des définitions formelles claires et concises.
+
+          **Instructions:**
+          1. Fournis la définition formelle du concept spécifié.
+          2. Utilise la notation LaTeX pour les formules mathématiques.
+          3. Sois concis et précis.
+          4. Commence ta réponse directement par le code LaTeX de la définition.
+
+          **Concept à définir:** {concept_name}
+          **Niveau:** {level}
+          **Définition formelle de référence (issue de la KB, si disponible):**
+          {formal_definition_from_KB}
+
+          **Format de sortie attendu:** Code LaTeX pur.
+          Définition formelle:
+          ```latex
+          {generated_content}
+          ```
+
+  - type: intuition
+    name: "Explication Intuitive et Analogie"
+    description: "Génère une explication intuitive et une analogie physique ou simple."
+    default_style: Feynman
+    templates:
+      - style: Feynman
+        level: default
+        content: |
+          Tu es un professeur de mathématiques passionné, capable d'expliquer les idées complexes de manière simple et intuitive, à la manière de Richard Feynman. Ton public est composé d'étudiants de niveau {level}.
+
+          **Instructions:**
+          1. Explique le concept de "{concept_name}" en te concentrant sur l'intuition physique ou l'idée fondamentale derrière la définition formelle.
+          2. Utilise un langage accessible, des phrases courtes et des analogies simples.
+          3. Propose une analogie concrète pour illustrer le concept. Utilise l'analogie suivante si elle est pertinente et vérifiée : "{verified_analogy_from_KB}". Sinon, propose une autre analogie.
+          4. Mentionne brièvement un piège courant associé à ce concept : "{pitfall_description_from_KB}".
+          5. Utilise LaTeX uniquement pour les formules mathématiques indispensables, mais privilégie le texte courant.
+          6. Structure ta réponse avec les sections suivantes: ## Intuition, ## Analogie (si une analogie est incluse), ## Piège Courant (si un piège est inclus).
+
+          **Concept:** {concept_name}
+          **Niveau cible:** {level}
+          **Définition formelle (pour référence, ne pas la répéter explicitement):** {formal_definition_from_KB}
+          **Prérequis connus:** {prerequisite_concepts_names}
+          **Idées de preuve (issues de la KB, si disponibles):** {proof_ideas_from_KB}
+
+          Réponse:
+          ```markdown
+          ## Intuition
+          {generated_intuition}
+
+          ## Analogie
+          {generated_analogy}
+
+          ## Piège Courant
+          {generated_pitfall_explanation}
+          ```
+
+  - type: proof_skeleton
+    name: "Squelette de Preuve"
+    description: "Génère les étapes clés d'une preuve pour un théorème."
+    default_style: Hybride
+    templates:
+      - style: Hybride
+        level: default
+        content: |
+          Tu es un assistant de rédaction de manuel de mathématiques. Ta tâche est de fournir un squelette de preuve pour le théorème spécifié, adapté à des étudiants de niveau {level}.
+
+          **Instructions:**
+          1. Liste les étapes clés du raisonnement pour prouver le théorème.
+          2. Ne pas fournir une preuve complète et formelle, juste les idées principales et les étapes logiques.
+          3. Pour chaque étape, indique brièvement l'idée ou le théorème/définition utilisé.
+          4. Utilise LaTeX pour les formules mathématiques.
+          5. Structure ta réponse comme une liste numérotée ou une séquence d'étapes claires.
+
+          **Théorème:** {theorem_name}
+          **Énoncé du Théorème:** {theorem_statement_from_KB}
+          **Niveau cible:** {level}
+          **Prérequis connus:** {prerequisite_concepts_names}
+          **Idées de preuve (issues de la KB, si disponibles):** {proof_ideas_from_KB}
+
+          Squelette de preuve:
+          ```markdown
+          {generated_proof_skeleton}
+          ```
+
+  - type: exercise
+    name: "Génération d'Exercice"
+    description: "Génère un énoncé d'exercice calculatoire avec sa solution."
+    default_style: default
+    templates:
+      - style: default
+        level: default
+        content: |
+          Tu es un générateur d'exercices de mathématiques. Crée un exercice calculatoire sur le concept de "{concept_name}", adapté à des étudiants de niveau {level}.
+
+          **Instructions:**
+          1. Génère un énoncé d'exercice clair et précis en LaTeX.
+          2. Génère la solution détaillée de l'exercice en LaTeX.
+          3. Le niveau de difficulté doit être {difficulty}.
+          4. L'exercice doit porter sur l'application directe de {concept_name} ou des concepts connexes {related_concepts_names}.
+          5. Fournis ta réponse au format JSON avec les clés "prompt_latex" et "solution_latex".
+
+          **Concept principal:** {concept_name}
+          **Niveau cible:** {level}
+          **Difficulté:** {difficulty}
+          **Concepts connexes pour l'exercice:** {related_concepts_names}
+
+          Réponse JSON:
+          ```json
+          {
+            "prompt_latex": "{generated_prompt_latex}",
+            "solution_latex": "{generated_solution_latex}"
+          }
+          ```
+
+  - type: text_block
+    name: "Bloc de Texte Général"
+    description: "Génère un bloc de texte général (introduction, transition, conclusion)."
+    default_style: Hybride
+    templates:
+      - style: Hybride
+        level: default
+        content: |
+          Tu es un assistant de rédaction de manuel de mathématiques. Ta tâche est de générer un bloc de texte de type "{block_type}" pour une section sur "{main_concept_name}".
+
+          **Instructions:**
+          1. Rédige le texte en respectant le niveau {level} et le style {style}.
+          2. Utilise LaTeX pour les formules mathématiques si nécessaire.
+          3. Le texte doit s'intégrer au contexte suivant : {section_context}.
+
+          **Type de bloc:** {block_type}
+          **Concept principal de la section:** {main_concept_name}
+          **Niveau:** {level}
+          **Style:** {style}
+          **Contexte de la section:** {section_context}
+
+          Contenu:
+          ```markdown
+          {generated_text_content}
+          ```
+
+  - type: refinement
+    name: "Raffinement de Contenu"
+    description: "Raffine un contenu existant basé sur un feedback."
+    default_style: default
+    templates:
+      - style: default
+        level: default
+        content: |
+          Tu es un assistant de rédaction de manuels mathématiques. Ta tâche est de raffiner un contenu LaTeX existant basé sur des instructions de modification.
+
+          **Niveau cible:** {level}
+          **Style:** {style}
+          **Type de contenu:** {block_type}
+          **Contexte:** {context}
+
+          **Contenu original à raffiner:**
+          ```latex
+          {original_content_latex}
+          ```
+
+          **Instructions de modification:**
+          {modification_instructions}
+
+          Fournis uniquement le contenu LaTeX raffiné. Ne pas inclure d'explications ou de commentaires supplémentaires. Assure-toi que le LaTeX est valide.
+          Contenu raffiné:
+          ```latex
+          {generated_refined_content}
+          

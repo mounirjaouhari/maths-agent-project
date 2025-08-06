@@ -1,0 +1,27 @@
+# results_table.csv
+# Ce fichier contient les résultats agrégés des benchmarks de performance des LLMs.
+# Chaque ligne représente le résultat d'un LLM pour une tâche de benchmark spécifique.
+
+# En-têtes de colonnes:
+# task_type: Type de tâche de génération (ex: definition, intuition, proof_skeleton, exercise, refinement)
+# content_subtype: Sous-type de contenu (ex: formelle, intuitive, calculatoire)
+# level: Niveau pédagogique (ex: L1, L2, M1, Lycée)
+# style: Style rédactionnel (ex: Bourbaki, Feynman, Hybride, default)
+# llm_name: Nom du Modèle de Langage Avancé (ex: gpt-4, gemini-pro, claude-3-opus)
+# qc_score_avg: Score QC moyen obtenu (sur 100)
+# qc_failure_rate: Taux d'échec du QC (pourcentage de réponses n'ayant pas passé le seuil QC)
+# latency_avg_s: Latence moyenne de l'API en secondes
+# throughput_tokens_per_s: Débit moyen en tokens par seconde
+# cost_per_task_usd: Coût moyen par tâche en USD
+# api_failure_rate: Taux d'échec de l'API (pourcentage d'appels API ayant retourné une erreur)
+# notes: Remarques ou observations spécifiques
+
+task_type,content_subtype,level,style,llm_name,qc_score_avg,qc_failure_rate,latency_avg_s,throughput_tokens_per_s,cost_per_task_usd,api_failure_rate,notes
+definition,formelle,L2,Bourbaki,gpt-4,92.5,0.02,3.2,50,0.015,0.01,"Très précis pour les définitions formelles"
+definition,formelle,L2,Bourbaki,gemini-pro,88.1,0.05,2.8,60,0.012,0.02,"Bonne performance, légèrement moins rigoureux"
+intuition,intuitive,L2,Feynman,gpt-4,78.9,0.1,2.5,55,0.01,0.01,"Moins créatif que d'autres pour l'intuition"
+intuition,intuitive,L2,Feynman,claude-3-opus,89.3,0.03,4.1,45,0.025,0.01,"Excellent pour les analogies créatives et le style Feynman"
+proof_skeleton,default,M1,Hybride,gpt-4,85.0,0.08,5.5,40,0.03,0.02,"Bonne logique, mais peut parfois manquer des étapes"
+exercise,calculation,L3,default,gemini-pro,82.7,0.12,3.5,58,0.018,0.03,"Bon pour les exercices calculatoires, solutions fiables"
+refinement,math_error,M1,default,gpt-4,88.0,0.05,4.0,48,0.02,0.01,"Efficace pour corriger les erreurs mathématiques"
+refinement,clarity_issue,L2,Feynman,claude-3-opus,91.5,0.02,4.5,42,0.028,0.01,"Très bon pour améliorer la clarté et le style"

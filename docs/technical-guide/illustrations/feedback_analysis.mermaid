@@ -1,0 +1,15 @@
+graph TD
+    A[Feedback Utilisateur - Texte Libre ou Annotation]  -->  B[Nettoyage du Feedback]
+    B  -->  C[Détection de l'Intention - NLP/NLU]
+    C  -->  D[Extraction du Type de Problème]
+    C  -->  E[Extraction des Détails du Feedback]
+    A  -->  F[Localisation - si Annotation UI]
+    C  -->  G[Feedback Structuré - pour Moteur de Raffinement]
+    D  -->  G
+    E  -->  G
+    F  -->  G
+    %% Styles
+    classDef process fill:#90ee90,stroke:#32cd32,stroke-width:2px
+    classDef data fill:#ffebcd,stroke:#ffb347,stroke-width:2px
+    class B,C,D,E,F process
+    class A,G data

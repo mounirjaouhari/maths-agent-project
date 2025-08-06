@@ -1,0 +1,99 @@
+erDiagram
+    users {
+        UUID user_id PK
+        VARCHAR username UK
+        VARCHAR password_hash
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        BOOLEAN is_active
+        VARCHAR role
+    }
+    projects {
+        UUID project_id PK
+        UUID user_id FK
+        VARCHAR title
+        VARCHAR subject
+        VARCHAR level
+        VARCHAR style
+        VARCHAR mode
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        VARCHAR status
+    }
+    documents {
+        UUID document_id PK
+        UUID project_id FK
+        UUID current_version_id FK
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    document_versions {
+        UUID version_id PK
+        UUID document_id FK
+        INTEGER version_number
+        TIMESTAMP created_at
+        VARCHAR status
+        JSONB content_structure
+    }
+    content_blocks {
+        UUID block_id PK
+        UUID version_id FK
+        VARCHAR block_type
+        TEXT content_latex
+        TEXT content_html
+        VARCHAR source_llm
+        JSONB generation_params
+        JSONB qc_report
+        VARCHAR status
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        INTEGER refinement_attempts
+    }
+    exercises {
+        UUID exercise_id PK
+        UUID version_id FK
+        UUID block_id FK "Nullable"
+        TEXT prompt_latex
+        TEXT solution_latex
+        VARCHAR difficulty
+        VARCHAR exercise_type
+        VARCHAR source_llm
+        JSONB qc_report
+        VARCHAR status
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    workflow_tasks {
+        UUID task_id PK
+        UUID project_id FK
+        VARCHAR task_type
+        VARCHAR status
+        JSONB parameters
+        VARCHAR celery_task_id "Nullable"
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        TIMESTAMP started_at "Nullable"
+        TIMESTAMP completed_at "Nullable"
+        TEXT error_message "Nullable"
+    }
+    user_feedback {
+        UUID feedback_id PK
+        UUID block_id FK
+        UUID user_id FK
+        TEXT feedback_text
+        VARCHAR feedback_type
+        JSONB location "Nullable"
+        TIMESTAMP created_at
+        VARCHAR status
+    }
+
+    users ||--o{ projects : "has"
+    projects ||--o{ documents : "contains"
+    documents ||--o{ document_versions : "has"
+    documents }o--|| document_versions : "current_version"
+    document_versions ||--o{ content_blocks : "composed_of"
+    document_versions ||--o{ exercises : "has"
+    content_blocks }o--|| exercises : "references"
+    projects ||--o{ workflow_tasks : "generates"
+    content_blocks ||--o{ user_feedback : "receives"
+    users ||--o{ user_feedback : "provides"

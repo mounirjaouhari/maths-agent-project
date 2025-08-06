@@ -1,0 +1,21 @@
+# Fichier placeholder pour service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: neo4j-service # Nom du service Kubernetes
+  labels:
+    app: neo4j # Labels pour identifier le service
+spec:
+  selector:
+    app: neo4j # Sélecteur pour les pods que ce service va exposer (doit correspondre aux labels du StatefulSet Neo4j)
+  ports:
+    - name: bolt # Nom du port pour les connexions Bolt (client)
+      protocol: TCP
+      port: 7687 # Le port sur lequel le service écoute
+      targetPort: 7687 # Le port sur lequel les conteneurs Neo4j écoutent
+    - name: http # Nom du port pour l'interface HTTP (navigateur Neo4j)
+      protocol: TCP
+      port: 7474 # Le port sur lequel le service écoute
+      targetPort: 7474 # Le port sur lequel les conteneurs Neo4j écoutent
+  type: ClusterIP # Type de service: ClusterIP rend le service accessible uniquement à l'intérieur du cluster.
+                  # Ce service est interne et n'est pas exposé directement à l'extérieur.

@@ -1,0 +1,43 @@
+graph TD
+    A[Appel Tâche Celery - generate_content_block_task] --> B[Service Génération]
+    B --> C[Logique d'Ingénierie Prompts - 4.1.2]
+    B --> D[Logique de Sélection LLM - 4.1.3]
+    B --> E[Service Base de Connaissances - KB Service]
+    C --> F[Orchestrateur d'Appels LLM]
+    D --> F
+    E --> F
+    F --> G1[Wrapper LLM 1 - OpenAI SDK]
+    F --> G2[Wrapper LLM 2 - Google AI SDK]
+    F --> G3[Wrapper LLM 3 - Anthropic SDK]
+    G1 --> H1[API Fournisseur 1]
+    G2 --> H2[API Fournisseur 2]
+    G3 --> H3[API Fournisseur 3]
+    H1 --> I1[LLM Externe 1]
+    H2 --> I2[LLM Externe 2]
+    H3 --> I3[LLM Externe 3]
+    I1 --> H1
+    I2 --> H2
+    I3 --> H3
+    H1 --> G1
+    H2 --> G2
+    H3 --> G3
+    F --> J[Parsing & Post-traitement de la Réponse LLM - 4.3]
+    J --> K[Brouillon Généré]
+    K --> L[Service QC - vers tâche run_qc]
+
+    %% Styles
+    classDef service fill:#add8e6,stroke:#318ce7,stroke-width:2px
+    classDef process fill:#90ee90,stroke:#32cd32,stroke-width:2px
+    classDef external fill:#f9f,stroke:#333,stroke-width:2px
+    
+    class B,E,L service
+    class C,D,F,J process
+    class G1,G2,G3 process
+    class H1,H2,H3 external
+    class I1,I2,I3 external
+    style H1 fill:#f9f,stroke:#333,stroke-width:2px
+    style H2 fill:#f9f,stroke:#333,stroke-width:2px
+    style H3 fill:#f9f,stroke:#333,stroke-width:2px
+    style I1 fill:#f9f,stroke:#333,stroke-width:2px
+    style I2 fill:#f9f,stroke:#333,stroke-width:2px
+    style I3 fill:#f9f,stroke:#333,stroke-width:2px

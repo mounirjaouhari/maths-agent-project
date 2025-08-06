@@ -1,0 +1,36 @@
+---
+config:
+  layout: elk
+---
+flowchart TD
+    A["Frontend<br>Navigateur"] -- Envoie --> B["Requête API<br>Tâche Longue"]
+    B -- Transmet --> C{"API Gateway"}
+    C -- Appelle --> D["Service Backend<br>Workflow Engine"]
+    D -- Envoie --> E["Celery Broker"]
+    E -- Distribue --> F["Celery Worker<br>Génération/QC/Export"]
+    F -- Exécute --> G["Service Externe"]
+    G -- Retourne --> F
+    F -- Rapporte --> E
+    E -- Notifie --> D
+    D -- Met à jour --> H(("Base de Données"))
+    H -- Fournit --> D
+    A -- Polling --> C
+    D -- WebSocket<br>Optionnel --> A
+    G --> note1["Note: Les services externes incluent LLM, outils QC, etc."]
+    H --> note2@{ label: "Note: Le backend lit et met à jour l'état dans la base de données." }
+    F --> note3["Note: Les workers Celery gèrent des tâches comme génération, QC, export."]
+    note2@{ shape: rect}
+     A:::frontend
+     C:::gateway
+     D:::backendService
+     E:::queue
+     F:::worker
+     G:::external
+     H:::db
+    classDef frontend fill:#add8e6,stroke:#318ce7,stroke-width:2px
+    classDef gateway fill:#b3cde0,stroke:#318ce7,stroke-width:2px
+    classDef backendService fill:#90ee90,stroke:#32cd32,stroke-width:2px
+    classDef queue fill:#ffebcd,stroke:#ffb347,stroke-width:2px
+    classDef worker fill:#f9c2c2,stroke:#c71585,stroke-width:2px
+    classDef db fill:#d3d3d3,stroke:#333,stroke-width:2px
+    classDef external fill:#e0e0e0,stroke:#333,stroke-dasharray: 5 5

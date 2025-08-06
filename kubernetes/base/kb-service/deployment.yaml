@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kb-service-deployment # Nom du déploiement Kubernetes
+  labels:
+    app: kb-service # Labels pour identifier le déploiement
+spec:
+  replicas: 2 # Nombre d'instances (pods) du KB Service à maintenir en cours d'exécution
+  selector:
+    matchLabels:
+      app: kb-service # Sélecteur pour les pods gérés par ce déploiement
+  template:
+    metadata:
+      labels:
+        app: kb-service # Labels pour les pods
+    spec:
+      containers:
+      - name: kb-service # Nom du conteneur
+        image: your-docker-registry.com/math-agent/kb-service:latest # Remplacez par l'image Docker de votre KB Service
+        ports:
+        - containerPort: 8000 # Le port sur lequel l'application FastAPI écoute
+        resources:
+          requests: # Ressources minimales requises par le conteneur
+            cpu: "250m" # 250 milliCPU
+            memory: "512Mi" # 512 Mégaoctets
+          limits: # Limites maximales de ressources que le conteneur peut utiliser
+            cpu: "1000m" # 1000 milliCPU (1 CPU complet)
+            memory: "2048Mi" # 2048 Mégaoctets (2 Go)
+        livenessProbe: # Sonde de vivacité: vérifie si l'application est toujours en cours d'exécution
+          httpGet:
+            path: /health # Endpoint de santé du KB Service
+            port: 8000
+          initialDelaySeconds: 20 # Délai avant la première vérification
+          periodSeconds: 10 # Fréquence des vérifications
+        readinessProbe: # Sonde de préparation: vérifie si l'application est prête à recevoir du trafic
+          httpGet:
+            path: /ready # Endpoint de préparation du KB Service
+            port: 8000
+          initialDelaySeconds: 25 # Délai avant la première vérification
+          periodSeconds: 10 # Fréquence des vérifications
+        env: # Variables d'environnement pour le conteneur
+        - name: KB_DATABASE_URL # URL de connexion à la base de données de la KB (PostgreSQL ou Neo4j)
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets # Nom du secret Kubernetes
+              key: kb_database_url # Clé dans le secret
+        - name: REDIS_URL # URL de Redis pour le caching de la KB
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: redis_url
+        # Ajoutez d'autres variables d'environnement nécessaires ici

@@ -1,0 +1,23 @@
+graph TD
+    A[Feedback Structuré - Utilisateur ou QC] --> B[Interprétation du Feedback]
+    B --> C[Contenu Original à Raffiner]
+    C --> D{Service Base Connaissances - KB Service}
+    C --> E[Contexte du Projet / Bloc]
+    B --> F[Formulation des Instructions de Modification]
+    C --> F
+    D --> F
+    E --> F
+    F --> G[Instructions pour LLM]
+    G --> H[Construction du Prompt Ajusté - pour Service Génération]
+    H --> I[Service Génération]
+    I --> J[Contenu Raffiné Généré]
+
+    %% Styles
+    classDef process fill:#90ee90,stroke:#32cd32,stroke-width:2px
+    classDef data fill:#ffebcd,stroke:#ffb347,stroke-width:2px
+    classDef service fill:#add8e6,stroke:#318ce7,stroke-width:2px
+    
+    class B,F,H process
+    class A,C,G,J data
+    class D,E data %% Contexte et KB sont des inputs
+    class I service

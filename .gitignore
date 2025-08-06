@@ -1,0 +1,78 @@
+# .gitignore
+# Fichiers et répertoires à ignorer par Git
+
+# --- Dépendances ---
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# --- Fichiers de build et de compilation ---
+# Frontend
+frontend/build/
+frontend/dist/
+frontend/coverage/ # Rapports de couverture de test
+# Backend
+backend/*/build/
+backend/*/dist/
+backend/*/*.egg-info/
+backend/*/htmlcov/ # Rapports de couverture Python
+
+# --- Fichiers de configuration locaux et secrets ---
+.env
+*.env.local
+*.env.*.local
+frontend/.env.local
+frontend/.env.*.local
+backend/*/.env
+backend/*/.env.local
+backend/*/config.local.py
+# Fichiers de secrets (à ne jamais versionner)
+*.key
+*.pem
+*.p12
+*.json.enc # Fichiers de secrets chiffrés si utilisés
+secrets/
+.secrets/
+
+# --- Logs et fichiers temporaires ---
+*.log
+logs/
+tmp/
+.ipynb_checkpoints/ # Jupyter notebooks
+.DS_Store # macOS
+Thumbs.db # Windows
+*.swp # Vim swap files
+*~ # Emacs backup files
+
+# --- IDE et éditeurs ---
+.idea/ # IntelliJ IDEA
+.vscode/ # VS Code
+*.sublime-project
+*.sublime-workspace
+
+# --- Bases de données locales ---
+*.sqlite3
+*.db
+*.sqlite
+
+# --- Docker ---
+*.dockerignore # Ce fichier est versionné, mais le contenu des images non
+.docker/
+docker-compose.override.yml # Si utilisé pour des configurations locales
+
+# --- Alembic (migrations) ---
+# Les répertoires de versions sont versionnés, mais pas les fichiers temporaires
+alembic.ini.bak
+
+# --- Rapports de tests ---
+test-results/
+.nyc_output/ # Couverture JS
+coverage/ # Couverture JS
+
+# --- Fichiers générés par les outils de documentation ---
+docs/build/
+docs/output/
+

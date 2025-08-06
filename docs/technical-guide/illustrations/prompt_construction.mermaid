@@ -1,0 +1,22 @@
+graph LR
+    A[Appel API Interne - Service Génération] --> B(Paramètres de l'Appel : Concept, Niveau, Style, Type)
+    B --> C{Service Base Connaissances - KB Service}
+    B --> D(Contexte Projet / Bloc : Texte Précédent, Structure)
+    C -- Données Vérifiées : Définitions, Pièges, Analogies --> E(Collecte des Informations)
+    D -- Contexte --> E
+    E --> F[Templates de Prompts - Stockés dans le Service de Génération]
+    F -- Sélection Template --> G(Construction Dynamique du Prompt)
+    E -- Informations Collectées --> G
+    G --> H[Prompt Final envoyé au LLM]
+    H --> I{LLM Sélectionné}
+
+    %% Styles
+    classDef service fill:#add8e6,stroke:#318ce7,stroke-width:2px
+    classDef data fill:#ffebcd,stroke:#ffb347,stroke-width:2px
+    classDef process fill:#90ee90,stroke:#32cd32,stroke-width:2px
+    classDef external fill:#f9f,stroke:#333,stroke-width:2px
+    
+    class C service
+    class D,E,F data
+    class G process
+    class I external

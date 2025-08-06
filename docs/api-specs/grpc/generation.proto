@@ -1,0 +1,128 @@
+# Fichier placeholder pour generation.proto
+syntax = "proto3";
+
+package generation;
+
+// Importez les types de données nécessaires, par exemple pour UUID ou Timestamp si vous les utilisez
+// import "google/protobuf/timestamp.proto";
+// import "google/protobuf/wrappers.proto"; // Pour des types comme StringValue, BoolValue
+
+// Service de génération de contenu via les LLMs
+service GenerationService {
+  // Génère une définition pour un concept mathématique
+  rpc GenerateDefinition (GenerateDefinitionRequest) returns (GenerateContentResponse);
+  // Génère une explication intuitive ou une analogie pour un concept
+  rpc GenerateIntuition (GenerateIntuitionRequest) returns (GenerateContentResponse);
+  // Génère un squelette ou une ébauche de preuve pour un théorème
+  rpc GenerateProofSkeleton (GenerateProofSkeletonRequest) returns (GenerateContentResponse);
+  // Génère un ou plusieurs exercices
+  rpc GenerateExercise (GenerateExerciseRequest) returns (GenerateExerciseResponse);
+  // Génère un bloc de texte général (introduction, transition, conclusion)
+  rpc GenerateTextBlock (GenerateTextBlockRequest) returns (GenerateContentResponse);
+  // Raffine un contenu existant basé sur un feedback
+  rpc RefineContent (RefineContentRequest) returns (GenerateContentResponse);
+}
+
+// Message de requête pour GenerateDefinition
+message GenerateDefinitionRequest {
+  string concept_id = 1; // ID du concept mathématique (représenté comme string pour UUID)
+  string type = 2; // Type de définition souhaité (formelle, intuitive, visuelle)
+  string level = 3; // Niveau pédagogique cible (ex: L1, L2, M1)
+  map<string, string> context = 4; // Contexte supplémentaire pour la génération
+}
+
+// Message de requête pour GenerateIntuition
+message GenerateIntuitionRequest {
+  string concept_id = 1; // ID du concept mathématique
+  string style = 2; // Style rédactionnel souhaité (Feynman, Hybride)
+  string level = 3; // Niveau pédagogique cible
+  map<string, string> context = 4; // Contexte supplémentaire pour la génération
+}
+
+// Message de requête pour GenerateProofSkeleton
+message GenerateProofSkeletonRequest {
+  string theorem_id = 1; // ID du théorème
+  string level = 2; // Niveau de détail/rigueur souhaité pour le squelette
+  string style = 3; // Style de la preuve (Bourbaki, Feynman, Hybride)
+  map<string, string> context = 4; // Contexte supplémentaire pour la génération
+}
+
+// Message de requête pour GenerateExercise
+message GenerateExerciseRequest {
+  string concept_id = 1; // Concept principal de l'exercice
+  string level = 2; // Niveau cible
+  string exercise_type = 3; // Type d'exercice (calculation, proof, application)
+  string difficulty = 4; // Niveau de difficulté (easy, medium, hard)
+  int32 num_exercises = 5; // Nombre d'exercices à générer
+  map<string, string> context = 6; // Contexte supplémentaire pour la génération
+}
+
+// Message de réponse pour GenerateExercise
+message GenerateExerciseResponse {
+  repeated GeneratedExercise exercises = 1; // Liste des exercices générés
+}
+
+// Message pour un exercice généré
+message GeneratedExercise {
+  string prompt_latex = 1; // L'énoncé de l'exercice en LaTeX
+  string solution_latex = 2; // La solution de l'exercice en LaTeX
+}
+
+// Message de requête pour GenerateTextBlock
+message GenerateTextBlockRequest {
+  string block_type = 1; // Type de bloc de texte général (introduction, conclusion, transition, example_text, historical_note, application_text)
+  string concept_id = 2; // ID du concept principal si pertinent
+  map<string, string> section_context = 3; // Informations sur la section en cours
+  string style = 4; // Style rédactionnel
+  string level = 5; // Niveau pédagogique cible
+  map<string, string> context = 6; // Contexte général pour la génération
+}
+
+// Message de requête pour RefineContent
+message RefineContentRequest {
+  string content_latex = 1; // Le contenu original à raffiner en LaTeX
+  Feedback feedback = 2; // Dictionnaire décrivant le feedback (utilisateur ou QC)
+  string block_type = 3; // Type du bloc de contenu
+  string level = 4; // Niveau pédagogique cible
+  string style = 5; // Style rédactionnel
+  map<string, string> context = 6; // Contexte supplémentaire pour le raffinement
+}
+
+// Message pour le feedback
+message Feedback {
+  string source = 1; // Source du feedback (user, qc)
+  string details = 2; // Texte du commentaire utilisateur ou résumé du problème QC
+  Location location = 3; // Informations de localisation du feedback
+  QCReport qc_report = 4; // Rapport QC complet si la source est 'qc'
+  bool critical_errors_only = 5; // Pour le feedback QC, ne considérer que les erreurs critiques
+}
+
+// Message pour la localisation
+message Location {
+  int32 line = 1;
+  int32 char_start = 2;
+  int32 char_end = 3;
+  // Ajoutez d'autres champs de localisation si nécessaire (ex: formula_id)
+}
+
+// Message pour le rapport QC (simplifié pour gRPC)
+message QCReport {
+  float overall_score = 1; // Score global de 0 à 100
+  string status = 2; // Statut (passed, failed, partial_success)
+  repeated QCProblem problems = 3; // Liste des problèmes détectés
+  map<string, string> details = 4; // Détails bruts des analyses par sous-module (math, pedago, coherence)
+}
+
+// Message pour un problème QC
+message QCProblem {
+  string type = 1; // Type de problème (math_error, clarity_issue, etc.)
+  string severity = 2; // Sévérité (critical, major, minor, warning)
+  string description = 3; // Description du problème
+  Location location = 4; // Localisation précise du problème
+  string suggested_fix = 5; // Suggestion de correction
+}
+
+// Message de réponse générique pour les opérations de génération de contenu
+message GenerateContentResponse {
+  string content_latex = 1; // Le contenu généré en format LaTeX
+}

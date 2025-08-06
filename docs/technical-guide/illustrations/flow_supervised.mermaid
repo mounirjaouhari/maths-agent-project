@@ -1,0 +1,40 @@
+graph TD
+    A[Début Projet] --> B{Étape 1 : Cadrage Initial}
+    B --> C[IA Génère Brouillon Cadrage]
+    C --> D{Validation Utilisateur : validé / refaire}
+    D -- validé --> E{Étape 2 : Architecture Conceptuelle}
+    D -- refaire --> C
+    E --> F[IA Liste Concepts et Relations]
+    F --> G{Validation : concept validé / ajouter élément}
+    G -- concept validé --> H[Étape 3 : Rédaction Pilote - Section 1]
+    G -- ajouter élément --> F
+    H --> I[IA Rédige un 1er Brouillon de Section]
+    I --> J[IA Effectue le Contrôle Qualité]
+    J --> K[IA Présente le Brouillon + Rapport QC]
+    K --> L{Validation : rédaction validée / notes de correction}
+    L -- rédaction validée --> M{Étape 5 : Enrichissement Progressif}
+    L -- notes de correction --> N[IA Analyse les Notes + Génère Instructions]
+    N --> O[IA Raffine le Brouillon]
+    O --> J
+    M --> P[IA Propose des Enrichissements]
+    P --> Q{Validation : enrichissement validé / refaire}
+    Q -- enrichissement validé --> R{Étape 6 : QC Final de la Section}
+    Q -- refaire --> P
+    R --> S[IA Effectue le QC Final]
+    S --> T{Validation : QC ok / problème détecté}
+    T -- QC ok --> U[Section Validée]
+    T -- problème détecté --> N
+    U --> V{Toutes les Sections Validées ?}
+    V -- Non --> H
+    V -- Oui --> W[Fin de Processus : tout approuvé]
+    W --> X[IA Unifie le Style, Table, Navigation]
+    X --> Y{Choix du Format Export}
+    Y --> Z[IA Compile et Exporte l'Ouvrage Complet]
+    Z --> End[Fin du Projet]
+
+    %% Sous-processus pour corrections
+    subgraph "Protocole de Correction"
+        N
+        O
+    end
+    %% Note: La boucle de correction (N->O->J) est un sous-flux déclenché par "refaire" ou "problème détecté".

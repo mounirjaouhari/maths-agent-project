@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-worker-qc-deployment # Nom du déploiement Kubernetes
+  labels:
+    app: celery-worker-qc # Labels pour identifier le déploiement
+spec:
+  replicas: 2 # Nombre d'instances (pods) des workers QC à maintenir en cours d'exécution
+  selector:
+    matchLabels:
+      app: celery-worker-qc # Sélecteur pour les pods gérés par ce déploiement
+  template:
+    metadata:
+      labels:
+        app: celery-worker-qc # Labels pour les pods
+    spec:
+      containers:
+      - name: celery-worker-qc # Nom du conteneur
+        image: your-docker-registry.com/math-agent/celery-worker-qc:latest # Remplacez par l'image Docker de votre worker Celery QC
+        command: ["celery"] # Commande principale pour démarrer Celery
+        args: ["-A", "app.celery_app", "worker", "-l", "info", "-Q", "qc"] # Arguments pour démarrer le worker, écouter la queue 'qc'
+        resources:
+          requests: # Ressources minimales requises par le conteneur
+            cpu: "700m" # 700 milliCPU
+            memory: "2048Mi" # 2048 Mégaoctets (2 Go)
+          limits: # Limites maximales de ressources que le conteneur peut utiliser
+            cpu: "3000m" # 3000 milliCPU (3 CPU complets)
+            memory: "6144Mi" # 6144 Mégaoctets (6 Go)
+        livenessProbe: # Sonde de vivacité: vérifie si le processus Celery est toujours en cours d'exécution
+          exec:
+            command: ["celery", "-A", "app.celery_app", "inspect", "ping"] # Commande pour vérifier la santé du worker
+          initialDelaySeconds: 40 # Délai avant la première vérification
+          periodSeconds: 15 # Fréquence des vérifications
+          timeoutSeconds: 5 # Délai avant que la commande ne soit considérée comme échouée
+        env: # Variables d'environnement pour le conteneur
+        - name: CELERY_BROKER_URL # URL du broker Celery (Redis)
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets # Nom du secret Kubernetes
+              key: celery_broker_url # Clé dans le secret
+        - name: CELERY_RESULT_BACKEND # URL pour stocker les résultats des tâches Celery
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: celery_result_backend
+        - name: QC_SERVICE_URL # URL du service QC (si les workers l'appellent)
+          value: http://qc-service-service:80 # Communication interne via le nom du service Kubernetes
+        # Ajoutez ici les variables d'environnement pour les outils externes (ex: Z3_PATH, WOLFRAM_ALPHA_API_KEY)
+        # Ces workers pourraient nécessiter des montages de volume si les outils externes ont des données persistantes

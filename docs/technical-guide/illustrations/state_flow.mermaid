@@ -1,0 +1,28 @@
+graph LR
+    A[Composant UI] -->|Déclenche| B[Action]
+    B -->|Envoie| C[Dispatcher]
+    C -->|Traite| D[Middleware<br>Optionnel: async]
+    D -->|Applique| E[Reducer]
+    E -->|Met à jour| F[Store Centralisé<br>État]
+    F -->|Fournit| G[Sélecteur]
+    G -->|Met à jour| A
+    I[Service API Frontend] -->|Requête| H[Backend API]
+    H -->|Réponse| I
+    I -->|Déclenche| B
+
+    %% Notes
+    note1[Note: Les composants lisent l'état via des sélecteurs et déclenchent des actions pour le modifier.]
+    A --> note1
+    note2[Note: Le middleware gère les appels asynchrones, comme les requêtes API.]
+    D --> note2
+
+    %% Styles
+    classDef process fill:#90ee90,stroke:#32cd32,stroke-width:2px
+    classDef data fill:#ffebcd,stroke:#ffb347,stroke-width:2px
+    classDef external fill:#f9f,stroke:#333,stroke-width:2px
+    classDef ui fill:#e6d6f9,stroke:#7b68ee,stroke-width:2px
+
+    class B,C,D,E,I,G process
+    class F data
+    class A ui
+    class H external

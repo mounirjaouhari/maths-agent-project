@@ -1,0 +1,370 @@
+openapi: 3.0.0
+info:
+  title: KB Service Internal API
+  description: API interne pour l'accès et l'interrogation de la Base de Connaissances mathématique et pédagogique.
+  version: 1.0.0
+servers:
+  - url: http://kb-service-service:80 # URL interne du service Kubernetes
+    description: Environnement Kubernetes interne
+paths:
+  /internal/concepts/{conceptId}:
+    get:
+      summary: Obtenir les détails d'un concept mathématique par ID
+      operationId: getConceptById
+      parameters:
+        - name: conceptId
+          in: path
+          required: true
+          description: ID du concept mathématique
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Détails du concept
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MathematicalConceptResponse'
+        '404':
+          description: Concept non trouvé
+  /internal/concepts/slug/{slug}:
+    get:
+      summary: Obtenir les détails d'un concept mathématique par slug
+      operationId: getConceptBySlug
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          description: Slug du concept mathématique
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Détails du concept
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MathematicalConceptResponse'
+        '404':
+          description: Concept non trouvé
+  /internal/concepts/{conceptId}/definitions:
+    get:
+      summary: Obtenir les définitions pour un concept
+      operationId: getDefinitionsForConcept
+      parameters:
+        - name: conceptId
+          in: path
+          required: true
+          description: ID du concept mathématique
+          schema:
+            type: string
+            format: uuid
+        - name: type
+          in: query
+          required: false
+          description: Type de définition (formelle, intuitive, visuelle)
+          schema:
+            type: string
+        - name: level
+          in: query
+          required: false
+          description: Niveau pédagogique cible
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Liste des définitions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConceptDefinitionResponse'
+  /internal/concepts/{conceptId}/prerequisites:
+    get:
+      summary: Obtenir les prérequis pour un concept
+      operationId: getPrerequisitesForConcept
+      parameters:
+        - name: conceptId
+          in: path
+          required: true
+          description: ID du concept mathématique
+          schema:
+            type: string
+            format: uuid
+        - name: recursive
+          in: query
+          required: false
+          description: Inclure les prérequis indirects
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Liste des concepts prérequis
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MathematicalConceptResponse'
+  /internal/concepts/{conceptId}/pitfalls:
+    get:
+      summary: Obtenir les pièges pédagogiques pour un concept
+      operationId: getPitfallsForConcept
+      parameters:
+        - name: conceptId
+          in: path
+          required: true
+          description: ID du concept mathématique
+          schema:
+            type: string
+            format: uuid
+        - name: level
+          in: query
+          required: false
+          description: Niveau pédagogique cible
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Liste des pièges pédagogiques
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PedagogicalPitfallResponse'
+  /internal/concepts/{conceptId}/analogies:
+    get:
+      summary: Obtenir les analogies pour un concept
+      operationId: getAnalogiesForConcept
+      parameters:
+        - name: conceptId
+          in: path
+          required: true
+          description: ID du concept mathématique
+          schema:
+            type: string
+            format: uuid
+        - name: level
+          in: query
+          required: false
+          description: Niveau pédagogique cible
+          schema:
+            type: string
+        - name: domain
+          in: query
+          required: false
+          description: Domaine de l'analogie (ex: Physique, Finance)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Liste des analogies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PedagogicalAnalogyResponse'
+  /internal/theorems/{theoremId}:
+    get:
+      summary: Obtenir les détails d'un théorème par ID
+      operationId: getTheoremById
+      parameters:
+        - name: theoremId
+          in: path
+          required: true
+          description: ID du théorème
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Détails du théorème
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TheoremResponse'
+        '404':
+          description: Théorème non trouvé
+  /internal/historical-notes:
+    get:
+      summary: Obtenir les notes historiques liées à une entité
+      operationId: getHistoricalNotesForEntity
+      parameters:
+        - name: entityId
+          in: query
+          required: true
+          description: ID de l'entité (concept ou théorème)
+          schema:
+            type: string
+            format: uuid
+        - name: entityType
+          in: query
+          required: true
+          description: Type de l'entité (concept, theorem)
+          schema:
+            type: string
+            enum: [concept, theorem]
+      responses:
+        '200':
+          description: Liste des notes historiques
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HistoricalNoteResponse'
+components:
+  schemas:
+    MathematicalConceptResponse:
+      type: object
+      properties:
+        concept_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+        domain:
+          type: string
+        level_min:
+          type: string
+        level_max:
+          type: string
+          nullable: true
+        description_short:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    ConceptDefinitionResponse:
+      type: object
+      properties:
+        definition_id:
+          type: string
+          format: uuid
+        concept_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+        level:
+          type: string
+          nullable: true
+        content_latex:
+          type: string
+        source:
+          type: string
+          nullable: true
+        is_verified:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+    PedagogicalPitfallResponse:
+      type: object
+      properties:
+        pitfall_id:
+          type: string
+          format: uuid
+        concept_id:
+          type: string
+          format: uuid
+        description_short:
+          type: string
+        explanation_latex:
+          type: string
+          nullable: true
+        level:
+          type: string
+          nullable: true
+        is_verified:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+    PedagogicalAnalogyResponse:
+      type: object
+      properties:
+        analogy_id:
+          type: string
+          format: uuid
+        concept_id:
+          type: string
+          format: uuid
+        title:
+          type: string
+          nullable: true
+        description_latex:
+          type: string
+        domain:
+          type: string
+          nullable: true
+        level:
+          type: string
+          nullable: true
+        is_verified:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+    TheoremResponse:
+      type: object
+      properties:
+        theorem_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          nullable: true
+        statement_latex:
+          type: string
+        proof_sketch_latex:
+          type: string
+          nullable: true
+        proof_full_latex:
+          type: string
+          nullable: true
+        is_verified:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+    HistoricalNoteResponse:
+      type: object
+      properties:
+        note_id:
+          type: string
+          format: uuid
+        concept_id:
+          type: string
+          format: uuid
+          nullable: true
+        theorem_id:
+          type: string
+          format: uuid
+          nullable: true
+        content_latex:
+          type: string
+        date_start:
+          type: string
+          format: date
+          nullable: true
+        date_end:
+          type: string
+          format: date
+          nullable: true
+        is_verified:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time

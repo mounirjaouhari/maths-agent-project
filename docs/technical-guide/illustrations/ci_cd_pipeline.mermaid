@@ -1,0 +1,32 @@
+---
+config:
+  layout: elk
+---
+flowchart TD
+    A["Code Commit"] -- Triggers --> B["Build Image"]
+    B -- Runs --> C["Unit Tests"]
+    C -- Runs --> D["Integration Tests"]
+    D -- Publishes --> E["Docker Image"]
+    E -- Deploys --> F["Staging"]
+    F -- Runs --> G["E2E Tests"]
+    G -- Requires --> H{"Manual Validation<br>Optional"}
+    H -- Validated --> I["Deploy to Production"]
+    H -- Issue Found --> A
+    I -- Runs --> J["Smoke Tests"]
+    J -- Deploys --> K["Application in Production"]
+    H --> note1["Note: Manual validation is optional and required only for specific cases."] & note2["Note: If issues are detected, the process returns to development for fixes."]
+     A:::data
+     B:::process
+     C:::process
+     D:::process
+     E:::process
+     F:::process
+     G:::process
+     H:::decision
+     I:::process
+     J:::process
+     K:::output
+    classDef process fill:#90ee90,stroke:#32cd32,stroke-width:2px
+    classDef data fill:#ffebcd,stroke:#ffb347,stroke-width:2px
+    classDef decision fill:#87cefa,stroke:#1e90ff,stroke-width:2px
+    classDef output fill:#f0e68c,stroke:#daa520,stroke-width:2px

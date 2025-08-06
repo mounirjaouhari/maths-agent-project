@@ -1,0 +1,57 @@
+erDiagram
+    mathematical_concepts {
+        UUID concept_id PK
+        VARCHAR name UK
+        VARCHAR slug UK
+        VARCHAR domain
+        VARCHAR level_min
+    }
+    theorems {
+        UUID theorem_id PK
+        VARCHAR name "Nullable"
+        TEXT statement_latex
+    }
+    pedagogical_pitfalls {
+        UUID pitfall_id PK
+        UUID concept_id FK
+        TEXT description_short
+        TEXT explanation_latex "Nullable"
+        VARCHAR level "Nullable"
+        BOOLEAN is_verified
+        TIMESTAMP created_at
+    }
+    pedagogical_analogies {
+        UUID analogy_id PK
+        UUID concept_id FK
+        VARCHAR title "Nullable"
+        TEXT description_latex
+        VARCHAR domain "Nullable"
+        VARCHAR level "Nullable"
+        BOOLEAN is_verified
+        TIMESTAMP created_at
+    }
+    concept_applications {
+        UUID application_id PK
+        UUID concept_id FK
+        VARCHAR domain
+        TEXT description_latex
+        BOOLEAN is_verified
+        TIMESTAMP created_at
+    }
+    historical_notes {
+        UUID note_id PK
+        UUID concept_id FK "Nullable"
+        UUID theorem_id FK "Nullable"
+        TEXT content_latex
+        DATE date_start "Nullable"
+        DATE date_end "Nullable"
+        BOOLEAN is_verified
+        TIMESTAMP created_at
+    }
+
+    mathematical_concepts ||--o{ pedagogical_pitfalls : "has"
+    mathematical_concepts ||--o{ pedagogical_analogies : "has"
+    mathematical_concepts ||--o{ concept_applications : "has"
+    mathematical_concepts ||--o{ historical_notes : "associated_with"
+    theorems ||--o{ historical_notes : "associated_with"
+    %% Note: Les relations vers historical_notes peuvent être nullables si une note n'est pas directement liée à un concept ou théorème spécifique.

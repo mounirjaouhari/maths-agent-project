@@ -1,0 +1,62 @@
+# Fichier placeholder pour kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+metadata:
+  name: staging-environment # Nom de la kustomization
+namespace: math-agent-staging # Namespace dédié à l'environnement de staging
+
+bases:
+  - ../base # Référence à la configuration de base commune
+
+# Ajout d'un suffixe aux noms des ressources pour l'environnement de staging (ex: -staging)
+nameSuffix: -staging
+
+# Définition des patches pour personnaliser les ressources de base
+patches:
+  - target:
+      kind: Deployment
+      name: api-gateway-deployment # Cible le déploiement de l'API Gateway
+    patch: |
+      - op: replace # Opération de remplacement
+        path: /spec/replicas # Chemin vers le nombre de réplicas
+        value: 1 # Réduit le nombre de réplicas pour staging
+  - target:
+      kind: Deployment
+      name: workflow-service-deployment # Cible le déploiement du Workflow Service
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 1 # Réduit le nombre de réplicas pour staging
+  # Ajoutez d'autres patches pour les déploiements de services si nécessaire
+  # Par exemple, pour ajuster les ressources ou injecter des variables d'environnement spécifiques à staging
+  - target:
+      kind: Ingress
+      name: math-agent-ingress # Cible la ressource Ingress
+    patch: |
+      - op: replace
+        path: /spec/rules/0/host # Cible le host de la première règle (api.your-domain.com)
+        value: api.staging.your-domain.com # Modifie le nom de domaine pour staging
+      - op: replace
+        path: /spec/rules/1/host # Cible le host de la deuxième règle (app.your-domain.com)
+        value: app.staging.your-domain.com # Modifie le nom de domaine pour staging
+      - op: replace
+        path: /spec/tls/0/hosts # Cible les hosts TLS
+        value:
+          - api.staging.your-domain.com
+          - app.staging.your-domain.com
+      - op: replace
+        path: /spec/tls/0/secretName # Nom du secret TLS pour staging
+        value: tls-secret-math-agent-staging # Utilise un secret TLS spécifique à staging
+
+# Définition des ConfigMaps et Secrets spécifiques à staging (si non gérés par un gestionnaire de secrets externe)
+# configMapGenerator:
+#   - name: staging-config
+#     literals:
+#       - ENV=staging
+#       - SOME_FEATURE_FLAG=false
+# secretGenerator:
+#   - name: app-secrets-staging
+#     literals:
+#       - DATABASE_URL=postgresql://user:password@postgresql-service-staging:5432/math_agent_staging
+#       - REDIS_PASSWORD=staging_redis_pass
+# 

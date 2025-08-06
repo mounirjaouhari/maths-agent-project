@@ -1,0 +1,44 @@
+---
+config:
+  layout: elk
+---
+flowchart TD
+    A["Utilisateur"] -- Interagit --> B["Couche Vues/Pages"]
+    B -- Contient --> C["Couche Présentation<br>Composants UI"]
+    B -- Appelle --> D["Couche Services API"]
+    D -- Requête --> E["API Gateway / Backend"]
+    E -- Réponse --> D
+    B -- Gère --> F@{ label: "Couche Gestion d'État" }
+    C -- Lit/Écrit --> F
+    F -- Met à jour --> C & B
+    B -- Utilise --> H["Couche Routage"]
+    H -- Sélectionne Vue --> B
+    B -- Charge --> I["Module Éditeur"] & J["Module Visualisation"] & K["Module Workflow UI"]
+    I -- Lit/Écrit --> F
+    J -- Lit --> F
+    K -- Lit/Écrit --> F
+    I -- Appelle --> D
+    J -- Appelle --> D
+    K -- Appelle --> D
+    F -- Stocke --> G["Store Centralisé"]
+    B --> note1@{ label: "Note: Les vues contiennent les composants UI, qui lisent/écrivent l'état via la gestion d'état." }
+    I --> note2@{ label: "Note: Les modules spécifiques interagissent avec l'état et les APIs pour des fonctionnalités dédiées." }
+    J --> note2
+    K --> note2
+    F@{ shape: rect}
+    note1@{ shape: rect}
+    note2@{ shape: rect}
+     B:::layer
+     C:::layer
+     D:::layer
+     E:::external
+     F:::layer
+     H:::layer
+     I:::module
+     J:::module
+     K:::module
+     G:::data
+    classDef layer fill:#add8e6,stroke:#318ce7,stroke-width:2px
+    classDef module fill:#90ee90,stroke:#32cd32,stroke-width:2px
+    classDef external fill:#f9f,stroke:#333,stroke-width:2px
+    classDef data fill:#ffebcd,stroke:#ffb347,stroke-width:2px

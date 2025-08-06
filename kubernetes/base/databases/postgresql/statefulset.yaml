@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgresql-statefulset # Nom du StatefulSet
+  labels:
+    app: postgresql # Labels pour identifier le StatefulSet
+spec:
+  serviceName: "postgresql-service" # Doit correspondre au nom du service headless pour StatefulSets
+  replicas: 1 # Nombre de réplicas. Pour une base de données primaire, souvent 1. Pour la haute disponibilité, utiliser des réplicas et une logique de réplication DB.
+  selector:
+    matchLabels:
+      app: postgresql # Sélecteur pour les pods gérés par ce StatefulSet
+  template:
+    metadata:
+      labels:
+        app: postgresql # Labels pour les pods
+    spec:
+      containers:
+      - name: postgresql # Nom du conteneur
+        image: postgres:14 # Image Docker de PostgreSQL (version 14 recommandée)
+        ports:
+        - containerPort: 5432 # Port par défaut de PostgreSQL
+        env: # Variables d'environnement pour la configuration de PostgreSQL
+        - name: POSTGRES_DB # Nom de la base de données par défaut
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets # Nom du secret Kubernetes contenant les informations de la base de données
+              key: postgres_db # Clé dans le secret
+        - name: POSTGRES_USER # Nom d'utilisateur de la base de données
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: postgres_user
+        - name: POSTGRES_PASSWORD # Mot de passe de l'utilisateur de la base de données
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: postgres_password
+        resources:
+          requests: # Ressources minimales requises
+            cpu: "500m" # 500 milliCPU
+            memory: "1024Mi" # 1 Go
+          limits: # Limites maximales de ressources
+            cpu: "1000m" # 1 CPU complet
+            memory: "2048Mi" # 2 Go
+        volumeMounts: # Montage du volume persistant pour les données de la base de données
+        - name: postgres-data # Nom du volume
+          mountPath: /var/lib/postgresql/data # Chemin de montage dans le conteneur
+      volumes: # Définition des volumes (pour les secrets)
+      - name: db-secrets
+        secret:
+          secretName: app-secrets # Référence au secret global des applications pour les clés DB
+  volumeClaimTemplates: # Modèle de PersistentVolumeClaim pour le stockage persistant
+  - metadata:
+      name: postgres-data # Nom du PVC (sera utilisé comme nom de volumeMount)
+    spec:
+      accessModes: [ "ReadWriteOnce" ] # Mode d'accès (lecture/écriture pour un seul pod)
+      storageClassName: standard # Classe de stockage (doit être configurée dans votre cluster Kubernetes)
+      resources:
+        requests:
+          storage: 10Gi # Taille du stockage persistant demandé (10 Go)

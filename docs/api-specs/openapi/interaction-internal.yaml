@@ -1,0 +1,132 @@
+openapi: 3.0.0
+info:
+  title: Interaction Service Internal API
+  description: API interne pour l'analyse du feedback utilisateur/QC et la formulation d'instructions de raffinement pour le contenu.
+  version: 1.0.0
+servers:
+  - url: http://interaction-service-service:80 # URL interne du service Kubernetes
+    description: Environnement Kubernetes interne
+paths:
+  /internal/refine/content:
+    post:
+      summary: Raffiner un contenu existant basé sur un feedback (utilisateur ou QC)
+      operationId: refineContentInternal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefineContentRequestInternal'
+      responses:
+        '200':
+          description: Contenu raffiné généré avec succès en LaTeX
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content_latex:
+                    type: string
+                    description: Le contenu raffiné en format LaTeX
+        '400':
+          description: Paramètres d'entrée invalides
+        '500':
+          description: Erreur interne du service ou échec du raffinement
+components:
+  schemas:
+    RefineContentRequestInternal:
+      type: object
+      required:
+        - content_latex
+        - feedback
+        - block_type
+        - level
+        - style
+      properties:
+        content_latex:
+          type: string
+          description: Le contenu original à raffiner en LaTeX
+        feedback:
+          type: object
+          description: Dictionnaire décrivant le feedback (utilisateur ou QC)
+          properties:
+            source:
+              type: string
+              enum: [user, qc]
+              description: Source du feedback
+            details:
+              type: string
+              description: Texte du commentaire utilisateur ou résumé du problème QC
+            location:
+              type: object
+              nullable: true
+              description: Informations de localisation du feedback (ex: ligne, caractère)
+              additionalProperties: true
+            qc_report:
+              $ref: '#/components/schemas/QCReport'
+              nullable: true
+              description: Rapport QC complet si la source est 'qc'
+            critical_errors_only:
+              type: boolean
+              default: false
+              description: Pour le feedback QC, ne considérer que les erreurs critiques
+          required:
+            - source
+        block_type:
+          type: string
+          enum: [definition, intuition, proof_skeleton, exercise, text, image]
+          description: Type du bloc de contenu
+        level:
+          type: string
+          description: Niveau pédagogique cible
+        style:
+          type: string
+          description: Style rédactionnel
+        context:
+          type: object
+          nullable: true
+          description: Contexte supplémentaire pour le raffinement
+          additionalProperties: true
+    QCReport:
+      type: object
+      properties:
+        overall_score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          example: 85.5
+        status:
+          type: string
+          enum: [passed, failed, partial_success]
+          example: failed
+        problems:
+          type: array
+          items:
+            $ref: '#/components/schemas/QCProblem'
+        details:
+          type: object
+          description: Détails bruts des analyses par sous-module (math, pedago, coherence)
+          additionalProperties: true
+    QCProblem:
+      type: object
+      required:
+        - type
+        - severity
+        - description
+      properties:
+        type:
+          type: string
+          enum: [math_error, clarity_issue, style_mismatch, coherence_issue, formatting_error, pedagogic_pitfall, other]
+        severity:
+          type: string
+          enum: [critical, major, minor, warning]
+        description:
+          type: string
+        location:
+          type: object
+          description: Localisation précise du problème dans le contenu (ex: ligne, caractère, formule_id)
+          nullable: true
+        suggested_fix:
+          type: string
+          nullable: true

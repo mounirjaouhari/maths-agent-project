@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celery-worker-export-deployment # Nom du déploiement Kubernetes
+  labels:
+    app: celery-worker-export # Labels pour identifier le déploiement
+spec:
+  replicas: 1 # Nombre d'instances (pods) des workers d'exportation à maintenir en cours d'exécution
+  selector:
+    matchLabels:
+      app: celery-worker-export # Sélecteur pour les pods gérés par ce déploiement
+  template:
+    metadata:
+      labels:
+        app: celery-worker-export # Labels pour les pods
+    spec:
+      containers:
+      - name: celery-worker-export # Nom du conteneur
+        image: your-docker-registry.com/math-agent/celery-worker-export:latest # Remplacez par l'image Docker de votre worker Celery d'exportation (doit inclure Pandoc, TeX Live)
+        command: ["celery"] # Commande principale pour démarrer Celery
+        args: ["-A", "app.celery_app", "worker", "-l", "info", "-Q", "export"] # Arguments pour démarrer le worker, écouter la queue 'export'
+        resources:
+          requests: # Ressources minimales requises par le conteneur
+            cpu: "1000m" # 1000 milliCPU (1 CPU complet)
+            memory: "2048Mi" # 2048 Mégaoctets (2 Go)
+          limits: # Limites maximales de ressources que le conteneur peut utiliser
+            cpu: "4000m" # 4000 milliCPU (4 CPU complets)
+            memory: "8192Mi" # 8192 Mégaoctets (8 Go)
+        livenessProbe: # Sonde de vivacité: vérifie si le processus Celery est toujours en cours d'exécution
+          exec:
+            command: ["celery", "-A", "app.celery_app", "inspect", "ping"] # Commande pour vérifier la santé du worker
+          initialDelaySeconds: 60 # Délai avant la première vérification (peut être long à cause des outils)
+          periodSeconds: 30 # Fréquence des vérifications
+          timeoutSeconds: 10 # Délai avant que la commande ne soit considérée comme échouée
+        env: # Variables d'environnement pour le conteneur
+        - name: CELERY_BROKER_URL # URL du broker Celery (Redis)
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets # Nom du secret Kubernetes
+              key: celery_broker_url # Clé dans le secret
+        - name: CELERY_RESULT_BACKEND # URL pour stocker les résultats des tâches Celery
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: celery_result_backend
+        - name: ASSEMBLY_EXPORT_SERVICE_URL # URL du service d'assemblage et d'exportation
+          value: http://assembly-export-service-service:80 # Communication interne via le nom du service Kubernetes
+        # Les chemins vers les exécutables de Pandoc ou TeX Live peuvent être nécessaires ici si non dans le PATH
+        # - name: PANDOC_PATH
+        #   value: /usr/bin/pandoc
+        # - name: PDFLATEX_PATH
+        #   value: /usr/bin/pdflatex
+        volumeMounts: # Montage de volumes pour les fichiers temporaires ou les assets d'exportation
+        - name: export-temp-storage
+          mountPath: /tmp/exports # Chemin où les fichiers temporaires d'exportation seront stockés
+      volumes: # Définition du volume (ex: EmptyDir pour le stockage temporaire, ou PersistentVolumeClaim pour la persistance)
+      - name: export-temp-storage
+        emptyDir: {} # Un volume temporaire qui est vidé lorsque le pod est supprimé
+        # Alternativement, utiliser un PersistentVolumeClaim si les fichiers exportés doivent persister ou être partagés
+        # persistentVolumeClaim:
+        #   claimName: export-pvc

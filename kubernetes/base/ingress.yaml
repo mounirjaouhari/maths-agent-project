@@ -1,0 +1,40 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: math-agent-ingress # Nom de la ressource Ingress
+  labels:
+    app: math-agent # Labels pour identifier l'Ingress
+  annotations:
+    # Exemple d'annotations pour un contrôleur Ingress Nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /$2 # Réécrit l'URL pour correspondre au chemin du service
+    nginx.ingress.kubernetes.io/ssl-redirect: "true" # Redirige le trafic HTTP vers HTTPS
+    # Si vous utilisez cert-manager pour la gestion des certificats SSL/TLS
+    # cert-manager.io/cluster-issuer: "letsencrypt-prod" # Nom de votre ClusterIssuer
+spec:
+  ingressClassName: nginx # Nom de votre classe Ingress (ex: nginx, traefik, etc.)
+  rules:
+    - host: api.your-domain.com # Remplacez par le nom de domaine de votre API
+      http:
+        paths:
+          - path: /api(/|$)(.*) # Chemin pour l'API Gateway (ex: /api/v1/projects)
+            pathType: Prefix # Type de chemin (Prefix, Exact, ImplementationSpecific)
+            backend:
+              service:
+                name: api-gateway-service # Nom du service Kubernetes de l'API Gateway
+                port:
+                  number: 80 # Port du service de l'API Gateway (tel que défini dans son service.yaml)
+    - host: app.your-domain.com # Remplacez par le nom de domaine de votre application frontend
+      http:
+        paths:
+          - path: /(.*) # Chemin pour le frontend (toutes les requêtes non API)
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-service # Nom du service Kubernetes du Frontend (à créer plus tard)
+                port:
+                  number: 80 # Port du service du Frontend
+  tls: # Configuration TLS pour HTTPS
+    - hosts:
+        - api.your-domain.com
+        - app.your-domain.com
+      secretName: tls-secret-math-agent # Nom du secret Kubernetes contenant le certificat TLS (ex: généré par cert-manager)

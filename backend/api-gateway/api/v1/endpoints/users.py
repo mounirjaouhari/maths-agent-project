@@ -95,8 +95,6 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     except httpx.RequestError as e:
         logger.error(f"Erreur réseau lors de l'appel au service de persistance: {e}")
         raise ServiceUnavailableException(detail="Le service de persistance n'est pas disponible.")
-    except UnauthorizedException: # Re-lève l'exception Unauthorized si déjà levée
-        raise
     except Exception as e:
         logger.error(f"Erreur inattendue lors de la connexion de l'utilisateur: {e}", exc_info=True)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erreur interne du serveur.")

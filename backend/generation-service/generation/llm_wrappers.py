@@ -62,8 +62,6 @@ class LLMWrapper:
                 return await self._call_anthropic(model_name, prompt, params)
             else:
                 raise BadRequestException(detail=f"Modèle LLM non supporté: {model_name}")
-        except LLMAPIError:
-            raise # Re-lève l'exception spécifique LLMAPIError
         except Exception as e:
             logger.error(f"Erreur inattendue lors de l'appel LLM pour le modèle {model_name}: {e}", exc_info=True)
             raise InternalServerError(detail=f"Erreur interne lors de l'appel au LLM {model_name}.")

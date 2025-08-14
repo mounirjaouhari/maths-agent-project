@@ -142,8 +142,6 @@ async def get_project(
     except httpx.RequestError as e:
         logger.error(f"Erreur réseau lors de l'appel au service de persistance: {e}")
         raise ServiceUnavailableException(detail="Le service de persistance n'est pas disponible.")
-    except ForbiddenException: # Re-lève l'exception Forbidden si déjà levée
-        raise
     except Exception as e:
         logger.error(f"Erreur inattendue lors de la récupération du projet: {e}", exc_info=True)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erreur interne du serveur.")
@@ -185,8 +183,6 @@ async def update_project(
     except httpx.RequestError as e:
         logger.error(f"Erreur réseau lors de l'appel au service de persistance: {e}")
         raise ServiceUnavailableException(detail="Le service de persistance n'est pas disponible.")
-    except ForbiddenException:
-        raise
     except Exception as e:
         logger.error(f"Erreur inattendue lors de la mise à jour du projet: {e}", exc_info=True)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erreur interne du serveur.")
@@ -225,8 +221,6 @@ async def delete_project(
     except httpx.RequestError as e:
         logger.error(f"Erreur réseau lors de l'appel au service de persistance: {e}")
         raise ServiceUnavailableException(detail="Le service de persistance n'est pas disponible.")
-    except ForbiddenException:
-        raise
     except Exception as e:
         logger.error(f"Erreur inattendue lors de la suppression du projet: {e}", exc_info=True)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erreur interne du serveur.")
@@ -269,8 +263,6 @@ async def send_workflow_signal(
     except httpx.RequestError as e:
         logger.error(f"Erreur réseau lors de l'appel au service de workflow: {e}")
         raise ServiceUnavailableException(detail="Le service de workflow n'est pas disponible.")
-    except ForbiddenException:
-        raise
     except Exception as e:
         logger.error(f"Erreur inattendue lors de l'envoi du signal: {e}", exc_info=True)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erreur interne du serveur.")
@@ -323,8 +315,6 @@ async def get_qc_report_for_block(
     except httpx.RequestError as e:
         logger.error(f"Erreur réseau lors de l'appel au service de persistance: {e}")
         raise ServiceUnavailableException(detail="Le service de persistance n'est pas disponible.")
-    except ForbiddenException:
-        raise
     except Exception as e:
         logger.error(f"Erreur inattendue lors de la récupération du rapport QC: {e}", exc_info=True)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Erreur interne du serveur.")

@@ -22,8 +22,6 @@ async def get_current_user_id(token: str = Depends(oauth2_scheme)) -> str:
         if user_id is None:
             raise UnauthorizedException(detail="Jeton invalide: ID utilisateur manquant.")
         return user_id
-    except UnauthorizedException:
-        raise # Re-lève l'exception Unauthorized si elle a déjà été levée par decode_access_token
     except Exception as e:
         logger.error(f"Erreur inattendue lors de la récupération de l'ID utilisateur à partir du jeton: {e}", exc_info=True)
         raise UnauthorizedException(detail="Jeton invalide ou erreur interne.")
@@ -44,8 +42,6 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> dict:
             raise UnauthorizedException(detail="Jeton invalide: informations utilisateur incomplètes.")
         
         return {"username": username, "user_id": user_id, "role": user_role}
-    except UnauthorizedException:
-        raise
     except Exception as e:
         logger.error(f"Erreur inattendue lors de la récupération de l'utilisateur à partir du jeton: {e}", exc_info=True)
         raise UnauthorizedException(detail="Jeton invalide ou erreur interne.")

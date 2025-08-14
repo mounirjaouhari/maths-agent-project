@@ -123,7 +123,7 @@ class MathVerifier:
             raise InternalServerError(detail=f"Erreur interne de parsing LaTeX: {e}")
 
     async def verify_mathematical_statement(self, statement_latex: str, context: Dict[str, Any] = None) -> Dict[str, Any]:
-        """
+        r"""
         Vérifie la justesse d'une seule assertion ou formule mathématique.
         Utilise SymPy pour les vérifications symboliques.
         Args:
